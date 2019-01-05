@@ -2,7 +2,6 @@ package common
 
 import io.reactivex.Observable
 import utils.logger
-import java.time.Clock
 
 class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
     val log = logger()

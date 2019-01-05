@@ -1,9 +1,10 @@
-import common.Bus
+import common.*
 import cpucore.CpuCore
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
 import org.slf4j.Logger
+import rendering.BusRenderer
 import rom4001.Rom4001
 import utils.logger
 import java.awt.*
@@ -26,15 +27,21 @@ class Visualizer: Frame() {
     var lastFpsUpdate = 0L
     var fpsCount = 0
     var fps = 0.0
+
     var drawImage: Image? = null
     var dg: Graphics? = null
+    var renderingBounds = Rectangle()
+
+    // Renderables
+    var extBusRenderer = BusRenderer()
 
     fun run() {
         log.info("Welcome to the 4004 CPU Visualizer")
         prepareGui()
 
         // Create an off-screen buffer to render to
-        drawImage = createImage(width, height)
+        renderingBounds = Rectangle(0,0, width - insets.left - insets.right, height - insets.top - insets.bottom)
+        drawImage = createImage(renderingBounds.width, renderingBounds.height)
         dg = drawImage!!.graphics
 
         var emitter: Emitter<Int>? = null
@@ -48,6 +55,8 @@ class Visualizer: Frame() {
         rom0 = rom4001.Rom4001(extDataBus!!, clk, cpuCore!!.sync, cpuCore!!.cmRom)
 
         // Create the graphics
+        initRenderers()
+
         val frame = Visualizer()
         frame.isVisible = true
 
@@ -85,6 +94,12 @@ class Visualizer: Frame() {
         })
     }
 
+    fun initRenderers() {
+        val bounds= Rectangle()
+//        extBusRenderer.initRenderer(extDataBus!!, Point(0, 40), Point(renderingBounds.width, 40), 30, bounds)
+        extBusRenderer.initRenderer(extDataBus!!, Point(100, 0), Point(100, renderingBounds.height), 30, bounds)
+    }
+
     override fun update(g: Graphics?) {
         if (g != null) {
             fpsCount++
@@ -95,14 +110,14 @@ class Visualizer: Frame() {
                 fpsCount = 0
             }
             if (dg != null) {
-                dg!!.color = Color.GRAY
+                dg!!.color = Background
                 dg!!.fillRect(0,0, width, height)
-                dg!!.color = Color.BLACK
-                val font = Font("Serif", PLAIN, 24)
+                dg!!.color = TextNormal
+                val font = Font(MainFont, PLAIN, MainFontSize)
                 dg!!.font = font
-                dg!!.drawString(String.format("CLK=%d, PC=%d", cpuCore?.getClkCount(), cpuCore?.pc?.clocked), 50, 150)
-                dg!!.drawString(String.format("FPS=%3.2f", fps), 20, height - 24)
-                g.drawImage(drawImage!!, 0, 0, this)
+                extBusRenderer.render(dg!!)
+//                dg!!.drawString(String.format("FPS=%3.2f", fps), 0, height -insets.top - 24)
+                g.drawImage(drawImage!!, 0 + insets.left, 0 + insets.top, this)
             }
         }
     }
