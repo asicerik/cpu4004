@@ -1,2 +1,2 @@
-# cpu4004
-An Intel 4004 Processor Simulator and Visualizer
+# j004
+An Intel 4004 Processor Simulator and Visualizer written in Java/Kotlin
