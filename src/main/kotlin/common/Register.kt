@@ -3,7 +3,7 @@ package common
 import io.reactivex.Observable
 import utils.logger
 
-class Register(val initialVal: Long, clk: Observable<Int>): Maskable() {
+class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
     val log = logger()
 
     var dataBus:Bus? = null
@@ -12,6 +12,10 @@ class Register(val initialVal: Long, clk: Observable<Int>): Maskable() {
     fun init(dataBus: Bus?, width: Int, name: String) {
         this.dataBus = dataBus
         super.baseInit(width, name)
+    }
+
+    fun reset() {
+        reg.reset()
     }
 
     // Read one nybble of data from the register using the bus as the destination
@@ -49,7 +53,7 @@ class Register(val initialVal: Long, clk: Observable<Int>): Maskable() {
 
     // ReadDirect directly reads one nybble of the register instead of using the bus
     fun readNybbleDirect(nybble: Int): Long {
-        return reg.clocked.shr(nybble * 4)
+        return reg.clocked.shr(nybble * 4).and(0xf)
     }
 
     // WriteDirect directly writes the register instead of using the bus

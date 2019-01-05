@@ -23,6 +23,13 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
         }
     }
 
+    fun reset() {
+        pc.reset()
+        for (i in 0 until stack.size) {
+            stack[i].reset()
+        }
+    }
+
     fun incrementProgramCounter() {
         pc.increment()
     }
@@ -38,7 +45,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     // Write one nybble of the program counter using the bus as the source
-    fun writeProgramCounter(nybble: Int, value: Long) {
+    fun writeProgramCounter(nybble: Int) {
         pc.writeNybbleDirect(nybble, dataBus.read())
     }
 
