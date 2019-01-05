@@ -12,9 +12,9 @@ class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clo
     // These are public so they can be shared and monitored
     // The contract is that you don't change them :)
 
-    private val decoder = RomRamDecoder(extDataBus, clk, sync, cm)
+    val decoder = RomRamDecoder(extDataBus, clk, sync, cm)
 
-    private var romID = 0   // Which ROM in the system
+    private var romID = 0L   // Which ROM in the system
 
     init {
         clk.subscribe {
@@ -29,7 +29,7 @@ class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clo
         return decoder.clkCount.clocked
     }
 
-    fun setRomID(id: Int) {
+    fun setRomID(id: Long) {
         decoder.setID(id)
     }
 

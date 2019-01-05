@@ -10,11 +10,11 @@ const val ArrowRight    = 1
 const val ArrowUp       = 2
 const val ArrowDown     = 3
 
-class BusRenderer() {
+class BusRenderer {
     var start = Point()
     var end = Point()
     var bounds = Rectangle()
-    var bus = Bus("")
+    var bus = Bus()
     var busWidth = 0
     var arrowWidth = 20         // for l/r arrows
     var arrowHeight = 30        // for u/d we reverse these

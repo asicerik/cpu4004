@@ -1,8 +1,10 @@
 package cpucore
 
+import addressstack.AddressStack
 import common.Buffer
 import common.Bus
 import common.Clocked
+import common.Register
 import io.reactivex.Observable
 import utils.logger
 import java.time.Clock
@@ -14,14 +16,15 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     val sync = Clocked(1, clk)      // Sync signal between devices
     val cmRom = Clocked(0, clk)     // ROM select signal from CPU
     val cmRam = Clocked(0, clk)     // RAM select signals (4 bits) from CPU
-    val pc = Clocked(0, clk)
 
     private val decoder = Decoder(clk)
-    private val intDataBus = Bus("CPU Internal BUS")
+    private val intDataBus = Bus()
     private val buffer = Buffer(intDataBus, extDataBus, "CPU Internal Buffer")
+    val addrStack = AddressStack(intDataBus, clk)  // Address stack for program counter and stack
     private var syncSent = false
 
     init {
+        intDataBus.init(4, "CPU Internal BUS")
         clk.subscribe {
             // Process on the falling edge of the clock and prepare all data for the rising edge
             if (it==0) {
@@ -55,7 +58,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
 
     fun update() {
         if (decoder.incPC != 0) {
-            pc.raw = pc.clocked + 1
+            addrStack.incrementProgramCounter()
         }
         if (decoder.genSync != 0) {
             sync.raw = 0
@@ -66,9 +69,10 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.genCmRam > 0) {
             cmRam.raw = decoder.genCmRam.inv().and(0xf)
         }
+
         // Writes to the internal bus
         if (decoder.pcOut > 0) {
-            intDataBus.write(pc.clocked.shr((decoder.pcOut-1)*4).and(0xf))
+            addrStack.readProgramCounter(decoder.pcOut-1)
         }
 
         // Lastly, output to the external bus if needed

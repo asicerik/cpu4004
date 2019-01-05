@@ -5,6 +5,8 @@ import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
 import org.slf4j.Logger
 import rendering.BusRenderer
+import rendering.CpuCoreRenderer
+import rendering.RomRamRenderer
 import rom4001.Rom4001
 import utils.logger
 import java.awt.*
@@ -21,9 +23,11 @@ fun main(args: Array<String>) {
 
 class Visualizer: Frame() {
     val log = logger()
-    var extDataBus: Bus? = null
+    var extDataBus = Bus()
     var cpuCore: CpuCore? = null
     var rom0: Rom4001? = null
+    var emitter: Emitter<Int>? = null
+
     var lastFpsUpdate = 0L
     var fpsCount = 0
     var fps = 0.0
@@ -33,7 +37,9 @@ class Visualizer: Frame() {
     var renderingBounds = Rectangle()
 
     // Renderables
+    var cpuRenderer = CpuCoreRenderer()
     var extBusRenderer = BusRenderer()
+    var romRenderer = RomRamRenderer()
 
     fun run() {
         log.info("Welcome to the 4004 CPU Visualizer")
@@ -44,15 +50,14 @@ class Visualizer: Frame() {
         drawImage = createImage(renderingBounds.width, renderingBounds.height)
         dg = drawImage!!.graphics
 
-        var emitter: Emitter<Int>? = null
-
         var clk: ConnectableObservable<Int> = Observable.create { it: Emitter<Int> ->
             emitter = it
         }.publish()
         clk.connect()
-        extDataBus = Bus("Ext Data Bus")
-        cpuCore = cpucore.CpuCore(extDataBus!!, clk)
-        rom0 = rom4001.Rom4001(extDataBus!!, clk, cpuCore!!.sync, cpuCore!!.cmRom)
+
+        extDataBus.init(4, "Ext Data Bus")
+        cpuCore = cpucore.CpuCore(extDataBus, clk)
+        rom0 = rom4001.Rom4001(extDataBus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
 
         // Create the graphics
         initRenderers()
@@ -60,16 +65,15 @@ class Visualizer: Frame() {
         val frame = Visualizer()
         frame.isVisible = true
 
-        val loops = 3200000
+        val loops = 32
         val startTime = System.currentTimeMillis()
         for (i in 0..loops) {
             LogState(cpuCore!!, rom0!!, log)
-            extDataBus!!.reset()
+            extDataBus.reset()
             emitter!!.onNext(0)
             //Thread.sleep(100)
             emitter!!.onNext(1)
-            //Thread.sleep(100)
-//            Thread.sleep(30)
+            Thread.sleep(100)
             repaint()
         }
         val endTime = System.currentTimeMillis()
@@ -95,9 +99,13 @@ class Visualizer: Frame() {
     }
 
     fun initRenderers() {
-        val bounds= Rectangle()
-//        extBusRenderer.initRenderer(extDataBus!!, Point(0, 40), Point(renderingBounds.width, 40), 30, bounds)
-        extBusRenderer.initRenderer(extDataBus!!, Point(100, 0), Point(100, renderingBounds.height), 30, bounds)
+        val romBounds = Rectangle(0,0, 0, 0)
+        romRenderer.initRenderer(rom0!!.decoder, romBounds)
+        val extBusBounds = Rectangle(0,romBounds.y + romBounds.height, renderingBounds.width, 0)
+        extBusRenderer.initRenderer(extDataBus!!, Point(0, 40), Point(renderingBounds.width, 40), 30, extBusBounds)
+        extBusBounds.height = 30
+        val cpuBounds = Rectangle(0,extBusBounds.y+extBusBounds.height, 0, 0)
+        cpuRenderer.initRenderer(cpuCore!!, cpuBounds)
     }
 
     override fun update(g: Graphics?) {
@@ -115,8 +123,11 @@ class Visualizer: Frame() {
                 dg!!.color = TextNormal
                 val font = Font(MainFont, PLAIN, MainFontSize)
                 dg!!.font = font
+                cpuRenderer.render(dg!!)
+                romRenderer.render(dg!!)
                 extBusRenderer.render(dg!!)
-//                dg!!.drawString(String.format("FPS=%3.2f", fps), 0, height -insets.top - 24)
+                dg!!.color = TextNormal
+                dg!!.drawString(String.format("FPS=%3.2f", fps), 0, height -insets.top - 24)
                 g.drawImage(drawImage!!, 0 + insets.left, 0 + insets.top, this)
             }
         }
@@ -127,8 +138,8 @@ class Visualizer: Frame() {
 fun LogState(core: cpucore.CpuCore, rom: rom4001.Rom4001, log: Logger) {
     if (log.isInfoEnabled)
         log.info("PC={}, DBUS={}, SYNC={}, CCLK={}, RCLK={}",
-            core.pc.clocked,
-            Integer.toHexString(core.extDataBus.value),
+            core.addrStack.getProgramCounter(),
+            Integer.toHexString(core.extDataBus.value.toInt()),
             core.sync.clocked,
             core.getClkCount(),
             rom.getClkCount())

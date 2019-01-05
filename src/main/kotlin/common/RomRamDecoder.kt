@@ -7,17 +7,23 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
     val log = logger()
 
     val clkCount = Clocked(0, clk)
-    val addrReg = Clocked(0, clk)
+    val addrReg = Register(0, clk)
+    val intBus = Bus()
     var syncSeen = false
 
     var romMode = true              // Chip is a ROM by default
     private var addrLoad = 0        // Load the address register. The value is the nybble (1 based)
     private var romDataOut = 0      // Output the ROM data. The value is the nybble (1 based)
 
-    private var id = 0
+    private var id = 0L
     private var chipSelected = false
 
-    fun setID(id: Int) {
+    init {
+        intBus.init(4, "ROM Internal Bus")
+        addrReg.init(intBus, 12, "Addr ")
+    }
+
+    fun setID(id: Long) {
         this.id = id
     }
 
@@ -68,13 +74,13 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
     fun update() {
         // Address register and chip select
         if (addrLoad == 1) {
-            addrReg.raw = extBus.value
+            addrReg.writeNybble(0)
         } else if (addrLoad == 2) {
-            addrReg.raw.or(extBus.value.shl(4))
+            addrReg.writeNybble(1)
         } else if (addrLoad == 3) {
             chipSelected = (extBus.value == id) && (cm.clocked != 0)
             if (log.isDebugEnabled)
-                log.debug("Chip ID {} ROM={}: selected = {}, ADDR={}", id, romMode, chipSelected, addrReg.clocked)
+                log.debug("Chip ID {} ROM={}: selected = {}, ADDR={}", id, romMode, chipSelected, addrReg.readDirect())
         }
 
         if (romDataOut == 1) {
