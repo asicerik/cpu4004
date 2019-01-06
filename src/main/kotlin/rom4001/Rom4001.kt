@@ -33,6 +33,14 @@ class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clo
         decoder.setID(id)
     }
 
+    fun getRomID(): Long {
+        return decoder.getID()
+    }
+
+    fun loadProgram(data: List<Byte>) {
+        decoder.loadProgram(data)
+    }
+
     private fun process() {
         resetFlags()
         decoder.clkAndSync()

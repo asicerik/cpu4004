@@ -1,10 +1,10 @@
 package cpucore
 
 import addressstack.AddressStack
-import common.Buffer
-import common.Bus
-import common.Clocked
-import common.Register
+import alu.AluCore
+import common.*
+import index.IndexRegisters
+import instruction.InstructionReg
 import io.reactivex.Observable
 import utils.logger
 import java.time.Clock
@@ -18,9 +18,12 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     val cmRam = Clocked(0, clk)     // RAM select signals (4 bits) from CPU
 
     private val decoder = Decoder(clk)
-    private val intDataBus = Bus()
-    private val buffer = Buffer(intDataBus, extDataBus, "CPU Internal Buffer")
-    val addrStack = AddressStack(intDataBus, clk)  // Address stack for program counter and stack
+    val intDataBus = Bus()
+    val buffer = Buffer(extDataBus, intDataBus, "Bus Buffer")
+    val aluCore = AluCore(intDataBus, clk)                  // ALU and associate registers
+    val instReg = InstructionReg(intDataBus, clk)           // Instruction Register
+    val addrStack = AddressStack(intDataBus, clk)           // Address stack for program counter and stack
+    val indexRegisters = IndexRegisters(intDataBus, clk)    // Index( scratchpad registers)
     private var syncSent = false
 
     init {
@@ -45,39 +48,42 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     }
 
     private fun resetFlags() {
+        intDataBus.reset()
+        // Transfer to the internal data bus if needed so the data is available to the decoder
+        if (decoder.readFlag(FlagTypes.BusDir) == BufDirIn) {
+            buffer.aToB()
+        }
         sync.raw = 1
         cmRom.raw = 1
         cmRam.raw = 0xf
         decoder.resetFlags()
-        intDataBus.reset()
-        // Transfer to the internal data bus if needed so the data is available to the decoder
-        if (decoder.bufDir == BufDirIn) {
-            buffer.bToA()
-        }
     }
 
     fun update() {
-        if (decoder.incPC != 0) {
+        if (decoder.readFlag(FlagTypes.PCInc) != 0) {
             addrStack.incrementProgramCounter()
         }
-        if (decoder.genSync != 0) {
+        if (decoder.readFlag(FlagTypes.Sync) != 0) {
             sync.raw = 0
         }
-        if (decoder.genCmRom != 0) {
+        if (decoder.readFlag(FlagTypes.CmRom) != 0) {
             cmRom.raw = 0
         }
-        if (decoder.genCmRam > 0) {
-            cmRam.raw = decoder.genCmRam.inv().and(0xf)
+        if (decoder.readFlag(FlagTypes.CmRam) > 0) {
+            cmRam.raw = decoder.readFlag(FlagTypes.CmRam).inv().and(0xf)
         }
 
         // Writes to the internal bus
-        if (decoder.pcOut > 0) {
-            addrStack.readProgramCounter(decoder.pcOut-1)
+        if (decoder.readFlag(FlagTypes.PCOut) > 0) {
+            addrStack.readProgramCounter(decoder.readFlag(FlagTypes.PCOut)-1)
         }
 
         // Lastly, output to the external bus if needed
-        if (decoder.bufDir == BufDirOut) {
-            buffer.aToB()
+        if (decoder.readFlag(FlagTypes.BusDir) == BufDirOut) {
+            buffer.bToA()
+        } else {
+            // Just so the renderer draws the right thing
+            buffer.setBusDirectionAToB()
         }
     }
 }

@@ -15,6 +15,9 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     val pc = Register(0L, clk)
     val stack = mutableListOf<Register>()
 
+    // Renderer stuff
+    var drivingBus = false
+
     init {
         pc.init(null, 12, "PC  ")
         for (i in 0 until stackDepth) {
@@ -42,6 +45,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     fun readProgramCounter(nybble: Int) {
         val value = pc.readNybbleDirect(nybble)
         dataBus.write(value)
+        drivingBus = true
     }
 
     // Write one nybble of the program counter using the bus as the source

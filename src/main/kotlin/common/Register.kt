@@ -9,6 +9,10 @@ class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
     var dataBus:Bus? = null
     var reg = Clocked(initialVal, clk)
 
+    // Renderer bits
+    var selected = false
+    val changed  = false
+
     fun init(dataBus: Bus?, width: Int, name: String) {
         this.dataBus = dataBus
         super.baseInit(width, name)
