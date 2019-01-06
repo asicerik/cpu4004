@@ -44,6 +44,9 @@ class IndexRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null)
+            return
+
         busRenderer.render(g, core!!.drivingBus)
         core!!.drivingBus = false
         for (i in 0 until core!!.regs.size) {

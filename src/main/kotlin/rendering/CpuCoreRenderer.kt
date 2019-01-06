@@ -52,6 +52,9 @@ class CpuCoreRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null)
+            return
+
         aluRenderer.render(g)
         ioABusRenderer.render(g, false)
         bufRenderer.render(g)

@@ -13,6 +13,8 @@ class BufferRenderer {
     }
 
     fun render(g: Graphics) {
+        if (buf == null)
+            return
         g.color = RegisterBackground
         g.fillRect(bounds.x,bounds.y,bounds.width, bounds.height)
         g.color = RegisterBorder

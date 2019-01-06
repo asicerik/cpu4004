@@ -13,6 +13,8 @@ class RegisterRenderer {
     }
 
     fun render(g: Graphics) {
+        if (reg == null)
+            return
         if (reg!!.selected)
             g.color = RegisterBackgroundSel
         else

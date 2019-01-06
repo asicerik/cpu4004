@@ -35,6 +35,8 @@ class InstructionRegRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null)
+            return
         busRenderer.render(g, core!!.drivingBus)
         core!!.drivingBus = false
         instRenderer.render(g)

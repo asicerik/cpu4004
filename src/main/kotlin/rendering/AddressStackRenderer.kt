@@ -41,6 +41,9 @@ class AddressStackRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null)
+            return
+
         busRenderer.render(g, core!!.drivingBus)
         core!!.drivingBus = false
         pcRenderer.render(g)

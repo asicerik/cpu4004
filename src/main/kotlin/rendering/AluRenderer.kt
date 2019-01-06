@@ -83,6 +83,8 @@ class AluCoreRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null)
+            return
         accumBusRenderer.render(g, core!!.accumDrivingBus)
         accumRenderer.render(g)
         accumAluBusRenderer.render(g, false)

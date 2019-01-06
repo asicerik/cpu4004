@@ -36,6 +36,9 @@ class RomRamRenderer {
     }
 
     fun render(g: Graphics) {
+        if (core == null) {
+            return
+        }
         addrRenderer.render(g)
         for (reg in valueRenderers) {
             reg.render(g)
