@@ -68,6 +68,7 @@ enum class FlagTypes {
     AccInst,                  // Execute an accumulator instruction
     TempLoad,                 // Load the temp register from the internal bus
     TempOut,                  // Temp register should drive the bus
+    AccTempSwap,              // Swap the accumulator and temp registers
     AluOut,                   // ALU core should drive the bus
     AluEval,                  // ALU should evaluate
     AluMode,                  // The current mode for the ALU
@@ -106,6 +107,10 @@ class Decoder(clk: Observable<Int>) {
     val clkCount = Clocked(0, clk)
     val flags = mutableMapOf<FlagTypes, DecoderFlag>()
     var syncSent = false
+    var currInstruction = -1     // If >= 0, the current instruction we are processing
+    var dblInstruction = 0       // If > 0, this is the current double instruction we are processing
+    var decodedInstruction = ""
+    var instChanged = false      // For the renderer
 
     init {
         createFlags()
@@ -125,6 +130,7 @@ class Decoder(clk: Observable<Int>) {
         flags[FlagTypes.AccInst]        = DecoderFlag("ACCI  ", -1, false)
         flags[FlagTypes.TempOut]        = DecoderFlag("TMPO  ", 0, false)
         flags[FlagTypes.TempLoad]       = DecoderFlag("TMPL  ", 0, false)
+        flags[FlagTypes.AccTempSwap]    = DecoderFlag("SWAP  ", 0, false)
         flags[FlagTypes.AluOut]         = DecoderFlag("ALUO", 0, false)
         flags[FlagTypes.AluEval]        = DecoderFlag("ALUE", 0, false)
         flags[FlagTypes.AluMode]        = DecoderFlag("ALUM", 0, false)
@@ -173,6 +179,11 @@ class Decoder(clk: Observable<Int>) {
     }
 
     fun calculateFlags() {
+        // Continue to decode instructions after clock 5
+        if (clkCount.raw != 5 && clkCount.raw != 6 && currInstruction > 0) {
+            decodeCurrentInstruction(false)
+        }
+
         // NOTE: we are using the raw count here. This allows us to use the next clock cycle count
         // as our index. That way everything is not off by one
         when (clkCount.raw) {
@@ -202,6 +213,7 @@ class Decoder(clk: Observable<Int>) {
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
             6 -> {
+                writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
                 // Could be in or out
                 writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
             }
@@ -213,5 +225,62 @@ class Decoder(clk: Observable<Int>) {
         }
     }
 
+    fun setCurrentInstruction(inst: Long, evalResult: Boolean) {
+        if (dblInstruction == 0) {
+            if (inst != 0L) {
+                log.debug(String.format("SetCurrentInstruction: %02X", inst))
+            }
+            currInstruction = inst.toInt()
+        } else {
+            currInstruction = dblInstruction
+        }
+        decodeCurrentInstruction(evalResult)
+    }
+
+    fun decodeCurrentInstruction(evalResult: Boolean) {
+        // The upper 4 bits of the instruction
+        val opr = currInstruction.and(0xf0).toByte()
+        val fullInst = currInstruction.toByte()
+        when (opr) {
+            // Note FIN and JIN share the same upper 4 bits
+//            FIN.toInt().and(0xf0).toByte() ->
+//                handleFIN_JIN(fullInst, evalResult)
+//            JCN, JMS, ISZ, JUN ->
+//                handleJCN_JMS_ISZ_JUN(fullInst, evalResult)
+            XCH ->
+                handleXCH(this)
+            LDM ->
+                handleLDM(this)
+//            LD ->
+//                handleLD(fullInst, evalResult)
+//            INC ->
+//                handleINC(fullInst, evalResult)
+//            FIM, SRC ->
+//                handleFIM_SRC(fullInst, evalResult)
+//            BBL ->
+//                handleBBL(fullInst, evalResult)
+//            ADD ->
+//                handleADD(fullInst, evalResult)
+//            SUB ->
+//                handleSUB(fullInst, evalResult)
+//            // Collectively, all the accumulator instructions
+//            ACC ->
+//                handleACC(fullInst, evalResult)
+        }
+
+        // These instructions require decoding the entire 8 bits
+        when (fullInst) {
+//            WRR ->
+//                handleWRR(fullInst, evalResult)
+        }
+    }
+
+    fun setDecodedInstructionString(inst: String) {
+        decodedInstruction = inst
+        instChanged = true
+        if (log.isDebugEnabled)
+            log.debug(String.format("--- Decoded instruction is: %s", decodedInstruction))
+    }
 
 }
+

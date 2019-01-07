@@ -15,7 +15,7 @@ val BufArrowColor           = Color(0x40f040)
 val AluFill                 = Color(0x00A0A0)
 val MainFont                = "Monospaced"
 val MainFontSize            = 24
-val RegisterWidth           = 100
+val RegisterWidth           = 110
 val RegisterHeight          = 40
 val BusWidth                = 4     // this is a 4 bit processor
 

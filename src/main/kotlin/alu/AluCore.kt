@@ -23,9 +23,9 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     var aluDrivingBus   = false
 
     init {
-        accum.init(null, BusWidth, "ACC ")
-        temp.init(null, BusWidth, "TEMP ")
-        flags.init(null, BusWidth, "FLAG ")
+        accum.init(dataBus, BusWidth, "ACC ")
+        temp.init(dataBus, BusWidth, "TEMP ")
+        flags.init(dataBus, BusWidth, "FLAG ")
         accumBus.init(BusWidth, "")
         tempBus.init(BusWidth, "")
         flagsBus.init(BusWidth, "")
@@ -35,5 +35,27 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         accum.reset()
         temp.reset()
         flags.reset()
+    }
+
+    fun swap() {
+        val tmp = temp.readDirect()
+        temp.writeDirect(accum.readDirect())
+        accum.writeDirect(tmp)
+    }
+
+    fun writeAccumulator() {
+        accum.write()
+    }
+
+    fun writeTemp() {
+        temp.write()
+    }
+
+    fun readAccumulator() {
+        accum.read()
+    }
+
+    fun readTemp() {
+        temp.read()
     }
 }
