@@ -21,6 +21,8 @@ class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clo
             // Process on the falling edge of the clock and prepare all data for the rising edge
             if (it==0) {
                 process()
+            } else {
+                clockOut()
             }
         }
     }
@@ -54,5 +56,9 @@ class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clo
 
     fun update() {
         decoder.update()
+    }
+
+    fun clockOut() {
+        decoder.clockOut()
     }
 }

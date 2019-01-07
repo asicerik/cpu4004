@@ -17,7 +17,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     val cmRom = Clocked(0, clk)     // ROM select signal from CPU
     val cmRam = Clocked(0, clk)     // RAM select signals (4 bits) from CPU
 
-    private val decoder = Decoder(clk)
+    val decoder = Decoder(clk)
     val intDataBus = Bus()
     val buffer = Buffer(extDataBus, intDataBus, "Bus Buffer")
     val aluCore = AluCore(intDataBus, clk)                  // ALU and associate registers
@@ -32,6 +32,8 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             // Process on the falling edge of the clock and prepare all data for the rising edge
             if (it==0) {
                 process()
+            } else {
+                clockOut()
             }
         }
     }
@@ -78,12 +80,15 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             addrStack.readProgramCounter(decoder.readFlag(FlagTypes.PCOut)-1)
         }
 
+    }
+
+    fun clockOut() {
         // Lastly, output to the external bus if needed
         if (decoder.readFlag(FlagTypes.BusDir) == BufDirOut) {
             buffer.bToA()
-        } else {
-            // Just so the renderer draws the right thing
-            buffer.setBusDirectionAToB()
+//        } else {
+//            // Just so the renderer draws the right thing
+//            buffer.setBusDirectionAToB()
         }
     }
 }

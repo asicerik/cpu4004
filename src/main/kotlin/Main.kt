@@ -4,6 +4,7 @@ import instruction.genLEDCount
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
+import logicanalyzer.LogicAnalyzer
 import org.slf4j.Logger
 import rendering.BusRenderer
 import rendering.CpuCoreRenderer
@@ -35,7 +36,7 @@ class RunFlags {
     var freeRun   = false // Let 'er rip!
     var halt      = false // Stop the processor
     var quit      = false // Quit the program
-    var showLa    = false // Show logic analyzer
+    var showLa    = true  // Show logic analyzer
 }
 
 class Visualizer: JFrame() {
@@ -92,16 +93,19 @@ class Visualizer: JFrame() {
                 LogState(cpuCore!!, rom0!!, log)
                 extDataBus.reset()
                 emitter!!.onNext(0)
+                laPanel.updateLa(0)
+
                 //Thread.sleep(100)
                 emitter!!.onNext(1)
+                laPanel.updateLa(1)
 //                Thread.sleep(250)
                 repaint()
-                runFlags.stepClock = false
                 cycleCount++
-                if (cycleCount == 8) {
+                if (cycleCount == 8 || runFlags.stepClock) {
                     cycleCount = 0
                     runFlags.stepCycle = false
                 }
+                runFlags.stepClock = false
             } else {
                 Thread.sleep(25)
             }
@@ -138,7 +142,7 @@ class Visualizer: JFrame() {
         mainPanel.add(cpuPanel, c)
 
         if (showLa) {
-            laPanel.preferredSize = Dimension(400, 800)
+            laPanel.preferredSize = Dimension(1000, 800)
             c.gridx = 1
             c.weightx = 1.0
             mainPanel.add(laPanel, c)
@@ -170,7 +174,7 @@ class Visualizer: JFrame() {
                     runFlags.stepClock = true
                 }
                 KeyEvent.VK_R -> {
-                    runFlags.freeRun = true
+                    runFlags.freeRun = !runFlags.freeRun
                 }
                 KeyEvent.VK_L -> {
                     runFlags.showLa = !runFlags.showLa
@@ -231,6 +235,7 @@ class Visualizer: JFrame() {
 
     // Create a panel to hold the Logic Analyzer
     inner class LogicAnalyzerPanel: JPanel() {
+        val laView = LogicAnalyzerMainView()
         init {
             layout = GridBagLayout()
             val c = GridBagConstraints()
@@ -244,26 +249,49 @@ class Visualizer: JFrame() {
             add(titleBox, c)
             c.weighty = 1.0
             c.gridy = 1
-            val laView = LogicAnalyzerMainView()
-            laView.preferredSize = Dimension(1000,1000)
+//            laView.preferredSize = Dimension(1000,1000)
             val scroller = JScrollPane(laView)
             add(scroller, c)
+        }
+        fun updateLa(clock: Long) {
+            laView.updateLa(clock)
         }
     }
 
     // Create a panel to hold the Logic Analyzer Scroller
     inner class LogicAnalyzerMainView: JPanel() {
+        val la = LogicAnalyzer()
+        fun updateLa(clock: Long) {
+            var dim = Dimension()
+            var cs = 0
+            if (rom0!!.decoder.chipSelected)
+                cs = 1
+
+            // Set the logic analyzer channels
+            la.setChannel(0, "CLK", 1, clock)
+            la.setChannel(1, "CNT", 4, cpuCore!!.getClkCount().toLong())
+            la.setChannel(2, "SYNC", 1, cpuCore!!.sync.clocked.toLong())
+            la.setChannel(3, "PC", 12, cpuCore!!.addrStack.getProgramCounter())
+            la.setChannel(4, "XBUS", 4, extDataBus.read())
+            la.setChannel(5, "CPUBUS", 4, cpuCore!!.intDataBus.read())
+            la.setChannel(6, "ROMBUS", 4, rom0!!.decoder.intBus.value)
+            la.setChannel(7, "RALOAD", 2, rom0!!.decoder.addrLoad.toLong())
+            la.setChannel(8, "ROMADDR", 4, rom0!!.decoder.addrReg.readDirect())
+            la.setChannel(9, "CMROM", 1, cpuCore!!.cmRom.clocked.toLong())
+            la.setChannel(10, "ROMDIR", 2, rom0!!.decoder.bufDir.toLong())
+            la.setChannel(11, "ROMOUT", 2, rom0!!.decoder.romDataOut.toLong())
+            la.setChannel(12, "ROMCS", 1, cs.toLong())
+
+            dim = la.runCycle()
+            preferredSize = dim
+            repaint()
+        }
         override fun paintComponent(g: Graphics?) {
             if (g != null) {
+                font = Font(MainFont, BOLD, MainFontSize)
                 g.color = Color.darkGray
                 g.fillRect(0,0,bounds.width, bounds.height)
-                g.color = TextNormal
-                val font = Font(MainFont, BOLD.or(ITALIC), MainFontSize)
-                g.font = font
-                g.drawString("Scroll Panel", 100, 30)
-                for (i in 0..200) {
-                    g.drawString(String.format("%d", i), i * 20, i * 20)
-                }
+                la.render(g)
             }
         }
     }

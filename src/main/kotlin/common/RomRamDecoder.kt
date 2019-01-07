@@ -9,7 +9,7 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
     val clkCount = Clocked(0, clk)
     val addrReg = Register(0, clk)
     val valueRegs = mutableListOf<Register>()
-    private val intBus = Bus()
+    val intBus = Bus()
     val buffer = Buffer(intBus, extBus, "I/O Buf ")
     val data = mutableListOf<Byte>()
 
@@ -21,11 +21,10 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
 
     // Flags
     var syncSeen = false
-    private var bufDir = BufDirNone // Which direction (if any) to transfer between internal and external bus
-    private var addrLoad = 0        // Load the address register. The value is the nybble (1 based)
-    private var romDataOut = 0      // Output the ROM data. The value is the nybble (1 based)
-
-    private var chipSelected = false
+    var bufDir = BufDirNone // Which direction (if any) to transfer between internal and external bus
+    var addrLoad = 0        // Load the address register. The value is the nybble (1 based)
+    var romDataOut = 0      // Output the ROM data. The value is the nybble (1 based)
+    var chipSelected = false
 
     init {
         intBus.init(4, "ROM Internal Bus")
@@ -75,9 +74,7 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
             return
         }
 
-        // NOTE: we are using the raw count here. This allows us to use the next clock cycle count
-        // as our index. That way everything is not off by one
-        when (clkCount.raw) {
+        when (clkCount.clocked) {
             0 -> {
                 addrLoad = 1
                 bufDir = BufDirIn   // Transfer to the internal bus
@@ -87,20 +84,24 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
                 bufDir = BufDirIn   // Transfer to the internal bus
             }
             2 -> {
-                addrLoad = 3
-                bufDir = BufDirIn   // Transfer to the internal bus
-            }
-            3 -> {
+                // This is a little bit of a hack. We are looking at the external bus here.
+                // This is because it is really hard to model the bus buffers in real-time.
+                chipSelected = (extBus.value == id) && (cm.clocked == 0)
+                if (log.isDebugEnabled)
+                    log.debug("Chip ID {} ROM={}: selected = {}, ADDR={}", id, romMode, chipSelected, addrReg.readDirect())
                 if (chipSelected && romMode) {
                     romDataOut = 1
                     bufDir = BufDirOut  // Transfer to the external bus
                 }
             }
-            4 -> {
+            3 -> {
                 if (chipSelected && romMode) {
                     romDataOut = 2
                     bufDir = BufDirOut  // Transfer to the external bus
                 }
+            }
+            7 -> {
+                bufDir = BufDirIn   // Transfer to the internal bus
             }
         }
     }
@@ -111,18 +112,18 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
             addrReg.writeNybble(0)
         } else if (addrLoad == 2) {
             addrReg.writeNybble(1)
-        } else if (addrLoad == 3) {
-            chipSelected = (extBus.value == id) && (cm.clocked != 0)
-            if (log.isDebugEnabled)
-                log.debug("Chip ID {} ROM={}: selected = {}, ADDR={}", id, romMode, chipSelected, addrReg.readDirect())
         }
 
         if (romDataOut == 1) {
-            intBus.write(0x8)
-        } else if (romDataOut == 2)
-            intBus.write(0x9)
+            val outData = data[addrReg.readDirect().toInt()].toLong().shr(4).and(0xf)
+            intBus.write(outData)
+        } else if (romDataOut == 2) {
+            val outData = data[addrReg.readDirect().toInt()].toLong().and((0xf))
+            intBus.write(outData)
+        }
+    }
 
-        // Lastly, output to the external bus if needed
+    fun clockOut() {
         if (bufDir == BufDirOut) {
             buffer.aToB()
             drivingBus = true
