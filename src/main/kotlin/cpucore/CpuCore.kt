@@ -40,6 +40,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
 
     fun reset() {
         addrStack.reset()
+        aluCore.reset()
     }
 
     fun getClkCount():Int {
@@ -79,6 +80,10 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
 
         if (decoder.readFlag(FlagTypes.IndexSelect) > 0)
             indexRegisters.select(decoder.readFlag(FlagTypes.IndexSelect))
+
+        if (decoder.readFlag(FlagTypes.ScratchPadInc) != 0) {
+            indexRegisters.increment()
+        }
 
         if (decoder.readFlag(FlagTypes.PCInc) != 0) {
             addrStack.incrementProgramCounter()

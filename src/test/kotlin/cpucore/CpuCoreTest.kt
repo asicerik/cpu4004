@@ -9,10 +9,11 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
+var emitter: Emitter<Int>? = null
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CpuCoreTest {
     val core: CpuCore
-    var emitter: Emitter<Int>? = null
     var dataBus = Bus()
     var clk: ConnectableObservable<Int>
 
@@ -24,13 +25,6 @@ class CpuCoreTest {
         }.publish()
         clk.connect()
         core = CpuCore(dataBus, clk)
-    }
-
-    fun step(count: Int) {
-        for (i in 0 until count) {
-            emitter!!.onNext(0)
-            emitter!!.onNext(1)
-        }
     }
 
     @Nested
@@ -85,59 +79,51 @@ class CpuCoreTest {
             // Check index register 2
             assertThat(core.indexRegisters.readDirect(2)).isEqualTo(7L)
         }
-    }
-
-    fun waitForSync(core: CpuCore): Pair<Boolean, Int> {
-        var count = 0
-        var syncSeen = false
-        for (i in 0..15) {
-            step(1)
-            if (core.sync.clocked == 0) {
-                if (!syncSeen) {
-                    syncSeen = true
-                    count = 0
-                } else {
-                    // Run one extra clock to put us on cycle 0
-                    step(1)
-                    break
-                }
-            } else {
-                count++
-            }
+        @Test
+        fun LD() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            // Write directly to an index register
+            core.indexRegisters.writeDirect(5, 9)
+            // Load the accumulator
+            runOneCycle(core, LD.toLong().or(0x5))
+            // Accumulator should now have 0x9
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(9L)
         }
-        return Pair(syncSeen, count)
-    }
-
-    fun runOneCycle(core: CpuCore, data: Long): Long {
-        val res = runOneIOCycle(core, data)
-        return res.first
-    }
-
-    fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
-        var addr = 0L
-        var ioVal = 0L
-        for (i in 0..7) {
-            emitter!!.onNext(0)
-
-            if (i < 3) {
-                addr = addr.or(core.extDataBus.read().shl(i * 4))
-            }
-            if (i == 6) {
-                ioVal = core.extDataBus.read()
-            }
-            if (i == 7) {
-                ioVal = ioVal.or(core.extDataBus.read().shl(4))
-            }
-            emitter!!.onNext(1)
-            if (i == 2) {
-//                rlog.Debugf("runOneCycle: Writing upper data %X", (data>>4)&0xf)
-                core.extDataBus.write(data.shr(4).and(0xf))
-            } else if (i == 3) {
-//                rlog.Debugf("runOneCycle: Writing lower data %X", data&0xf)
-                core.extDataBus.write(data.and(0xf))
-            }
+        @Test
+        fun INC() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            // Write directly to an index register
+            core.indexRegisters.writeDirect(5, 9)
+            // Run the increment
+            runOneCycle(core, INC.toLong().or(0x5))
+            // The register should now have 10
+            assertThat(core.indexRegisters.readDirect(5)).isEqualTo(10L)
         }
-        return Pair(addr, ioVal)
-    }
+        @Test
+        fun ADD() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            val valA = 9L
+            val valB = 6L
+            // Write directly to an index register
+            core.indexRegisters.writeDirect(5, valA)
+            // Write the other operand to the accumulator
+            // Load the accumulator
+            runOneCycle(core, LDM.toLong().or(valB))
+            // Run the add
+            runOneCycle(core, ADD.toLong().or(0x5))
 
+            // Accumulator should now have the sum
+            val expVal = valA + valB
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+        }
+    }
 }

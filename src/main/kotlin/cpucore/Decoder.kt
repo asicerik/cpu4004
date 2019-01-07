@@ -53,6 +53,23 @@ const val JCN_TEST_UNSET = 0x19  // Jump if test bit is NOT set
 const val JCN_CARRY_UNSET = 0x1A // Jump if carry bit is NOT set
 const val JCN_ZERO_UNSET = 0x1C  // Jump if accumulator is NOT zero
 
+// From the instruction decoder
+const val AluIntModeNone = 0
+const val AluIntModeAdd = 1
+const val AluIntModeSub = 2
+
+const val AluAdd = "+"
+const val AluSub = "-"
+const val AluNone = ""
+
+data class AluFlags(
+    var zero: Int,  // The accumulator is zero
+    var carry: Int  // The carry bit is set
+)
+
+const val FlagPosZero  = 0x2L
+const val FlagPosCarry = 0x4L
+
 enum class FlagTypes {
     // External I/O Comes first in the list
     Sync,                     // We should output the SYNC signal
@@ -251,10 +268,10 @@ class Decoder(clk: Observable<Int>) {
                 handleXCH(this)
             LDM ->
                 handleLDM(this)
-//            LD ->
-//                handleLD(fullInst, evalResult)
-//            INC ->
-//                handleINC(fullInst, evalResult)
+            LD ->
+                handleLD(this)
+            INC ->
+                handleINC(this)
 //            FIM, SRC ->
 //                handleFIM_SRC(fullInst, evalResult)
 //            BBL ->

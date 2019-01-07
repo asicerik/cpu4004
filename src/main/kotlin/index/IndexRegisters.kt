@@ -47,6 +47,11 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
         return regs[indexIn].readDirect()
     }
 
+    // This should only be used for testing
+    fun writeDirect(indexIn: Int, value: Long) {
+        regs[indexIn].writeDirect(value)
+    }
+
     fun write() {
         regs[index].write()
         if (log.isTraceEnabled) {
