@@ -6,7 +6,7 @@ import kotlin.experimental.or
 fun genLEDCount(): List<Byte> {
     val data = mutableListOf<Byte>()
     for (i in 0 until 16) {
-        addInstruction(data, LDM.or(0))       // Load 0 into the accumulator (chip ID)
+        addInstruction(data, LDM.or(3))       // Load 0 into the accumulator (chip ID)
         addInstruction(data, XCH.or(2))       // Swap accumulator with r2
         addInstruction(data, LDM.or(i.toByte()))    // Load i value into the accumulator
         addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM

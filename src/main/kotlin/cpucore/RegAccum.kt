@@ -7,21 +7,20 @@ fun handleXCH(d: Decoder) {
         // Output the current scratchpad register
         d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xf))
         d.writeFlag(FlagTypes.ScratchPadOut, 1)
+    } else if (d.clkCount.raw == 7) {
         // Load the data into the Temp register
         d.writeFlag(FlagTypes.TempLoad, 1)
-    } else if (d.clkCount.raw == 7) {
         // Output the accumulator
         d.writeFlag(FlagTypes.AccOut, 1)
+    } else if (d.clkCount.raw == 0) {
         // Load the data into the scratchpad register
         d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xf))
         d.writeFlag(FlagTypes.IndexLoad, 1)
-    } else if (d.clkCount.raw == 0) {
         // Swap the temp and accumulator registers
         d.writeFlag(FlagTypes.AccTempSwap, 1)
         d.currInstruction = -1
     }
 }
-
 
 fun handleLDM(d: Decoder) {
     if (d.clkCount.raw == 5) {

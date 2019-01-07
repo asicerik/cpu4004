@@ -38,6 +38,10 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         }
     }
 
+    fun reset() {
+        addrStack.reset()
+    }
+
     fun getClkCount():Int {
         return decoder.clkCount.clocked
     }
@@ -122,7 +126,6 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
             indexRegisters.read()
         }
-
     }
 
     fun clockOut() {

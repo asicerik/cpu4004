@@ -41,14 +41,17 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         val tmp = temp.readDirect()
         temp.writeDirect(accum.readDirect())
         accum.writeDirect(tmp)
+        log.trace(String.format("ALU Swap. accum=%X, temp=%X", accum.readDirect(), temp.readDirect()))
     }
 
     fun writeAccumulator() {
         accum.write()
+        log.trace(String.format("ALU write with %X", dataBus.read()))
     }
 
     fun writeTemp() {
         temp.write()
+        log.trace(String.format("Temp write with %X", dataBus.read()))
     }
 
     fun readAccumulator() {

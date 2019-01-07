@@ -214,8 +214,8 @@ class Decoder(clk: Observable<Int>) {
             }
             6 -> {
                 writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
-                // Could be in or out
-                writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
+                // Could be in or out or none
+                writeFlag(FlagTypes.BusDir, BufDirNone) // Transfer to the internal bus
             }
             7 -> {
                 writeFlag(FlagTypes.Sync, 1)    // Generate the sync pulse

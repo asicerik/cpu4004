@@ -20,7 +20,7 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
 
     init {
         for (i in 0 until indexRegisters) {
-            regs.add(Register(i.toLong(), clk))
+            regs.add(Register(0L, clk))
             regs[i].init(dataBus, BusWidth, "")
         }
     }
@@ -43,8 +43,8 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
         drivingBus = true
     }
 
-    fun readDirect(): Long {
-        return regs[index].readDirect()
+    fun readDirect(indexIn: Int): Long {
+        return regs[indexIn].readDirect()
     }
 
     fun write() {

@@ -306,6 +306,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "TMPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempOut).toLong())
             la.setChannel(pos++, "TEMP", 4, cpuCore!!.aluCore.temp.readDirect())
             la.setChannel(pos++, "SEL", 4, cpuCore!!.indexRegisters.index.toLong())
+            la.setChannel(pos++, "SPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.IndexLoad).toLong())
             la.setChannel(pos++, "SPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.ScratchPadOut).toLong())
             return pos
         }
