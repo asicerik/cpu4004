@@ -7,12 +7,12 @@ import cpucore.Decoder
 import io.reactivex.Observable
 import utils.logger
 
-class Rom4001(extDataBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clocked<Int>) {
+class Rom4001(extDataBus: Bus, ioBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clocked<Int>) {
     val log = logger()
     // These are public so they can be shared and monitored
     // The contract is that you don't change them :)
 
-    val decoder = RomRamDecoder(extDataBus, clk, sync, cm)
+    val decoder = RomRamDecoder(extDataBus, ioBus, clk, sync, cm)
 
     private var romID = 0L   // Which ROM in the system
 

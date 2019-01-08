@@ -9,6 +9,7 @@ import logicanalyzer.LogicAnalyzer
 import org.slf4j.Logger
 import rendering.BusRenderer
 import rendering.CpuCoreRenderer
+import rendering.IoBusRenderer
 import rendering.RomRamRenderer
 import rom4001.Rom4001
 import utils.logger
@@ -43,6 +44,7 @@ class RunFlags {
 class Visualizer: JFrame() {
     val log = logger()
     var extDataBus = Bus()
+    var led0Bus = Bus()
     var cpuCore: CpuCore? = null
     var rom0: Rom4001? = null
     var emitter: Emitter<Int>? = null
@@ -78,7 +80,8 @@ class Visualizer: JFrame() {
 
         extDataBus.init(4, "Ext Data Bus")
         cpuCore = cpucore.CpuCore(extDataBus, clk)
-        rom0 = rom4001.Rom4001(extDataBus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
+        rom0 = rom4001.Rom4001(extDataBus, led0Bus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
+        led0Bus.init(4, "")
 
         // Load the ROMs
         rom0!!.loadProgram(genLEDCount())
@@ -145,7 +148,7 @@ class Visualizer: JFrame() {
         mainPanel.add(cpuPanel, c)
 
         if (showLa) {
-            laPanel.preferredSize = Dimension(1000, 1200)
+            laPanel.preferredSize = Dimension(1000, 1400)
             c.gridx = 1
             c.weightx = 1.0
             mainPanel.add(laPanel, c)
@@ -201,10 +204,14 @@ class Visualizer: JFrame() {
         var cpuRenderer = CpuCoreRenderer()
         var extBusRenderer = BusRenderer()
         var romRenderer = RomRamRenderer()
+        var led0Renderer = IoBusRenderer()
 
         fun initRenderers() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
             romRenderer.initRenderer(rom0!!.decoder, romBounds)
+            val ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
+            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
+            led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
             val extBusWidth = 30
             val extBusBounds = Rectangle(0,romBounds.y + romBounds.height + extBusWidth/2, leftRenderingBounds.width, 0)
             extBusRenderer.initRenderer(extDataBus!!, Point(extBusBounds.x, extBusBounds.y), Point(leftRenderingBounds.width, extBusBounds.y), 30)
@@ -228,6 +235,7 @@ class Visualizer: JFrame() {
                 val font = Font(MainFont, BOLD, MainFontSize)
                 g.font = font
                 romRenderer.render(g)
+                led0Renderer.render(g)
                 extBusRenderer.render(g, false)
                 cpuRenderer.render(g)
                 g.color = TextNormal
@@ -317,6 +325,7 @@ class Visualizer: JFrame() {
                 cs = 1
 
             la.setChannel(pos++, "ROMBUS", 4, rom0!!.decoder.intBus.value)
+            la.setChannel(pos++, "LED0BUS", 4, led0Bus.value)
             la.setChannel(pos++, "RALOAD", 2, rom0!!.decoder.addrLoad.toLong())
             la.setChannel(pos++, "ROMADDR", 4, rom0!!.decoder.addrReg.readDirect())
             la.setChannel(pos++, "CMROM", 1, cpuCore!!.cmRom.clocked.toLong())

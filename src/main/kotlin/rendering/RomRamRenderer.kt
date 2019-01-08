@@ -33,6 +33,7 @@ class RomRamRenderer {
             Point(addrLeft+ RegisterWidth, addrTop + bounds.height),
             Point(addrLeft+ RegisterWidth, addrTop + bounds.height + busHeight), busWidth)
         bounds.height += busHeight
+        bounds.width = 2* RegisterWidth
     }
 
     fun render(g: Graphics) {

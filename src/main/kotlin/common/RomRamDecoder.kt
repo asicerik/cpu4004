@@ -1,13 +1,16 @@
 package common
 
+import cpucore.SRC
+import cpucore.WRR
 import io.reactivex.Observable
 import utils.logger
 
-class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
+class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
     val log = logger()
 
     val clkCount = Clocked(0, clk)
     val addrReg = Register(0, clk)
+    val instReg = Register(0, clk)
     val valueRegs = mutableListOf<Register>()
     val intBus = Bus()
     val buffer = Buffer(intBus, extBus, "I/O Buf ")
@@ -21,14 +24,18 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
 
     // Flags
     var syncSeen = false
-    var bufDir = BufDirNone // Which direction (if any) to transfer between internal and external bus
-    var addrLoad = 0        // Load the address register. The value is the nybble (1 based)
-    var romDataOut = 0      // Output the ROM data. The value is the nybble (1 based)
+    var bufDir = BufDirNone     // Which direction (if any) to transfer between internal and external bus
+    var addrLoad = 0            // Load the address register. The value is the nybble (1 based)
+    var romDataOut = 0          // Output the ROM data. The value is the nybble (1 based)
     var chipSelected = false
+    var srcDetected  = false    // SRC command was detected
+    var srcRomID     = 0L       // The ROM ID sent in the SRC command
+    var ioOpDetected = false    // IO Operation was detected
 
     init {
         intBus.init(4, "ROM Internal Bus")
         addrReg.init(intBus, 12, "Addr ")
+        instReg.init(intBus, 8, "INST ")
         for (i in 0..2) {
             valueRegs.add(Register(0, clk))
             valueRegs[i].init(null, 8, "     ") // The spaces line up the values in the center
@@ -92,12 +99,69 @@ class RomRamDecoder(val extBus: Bus, clk: Observable<Int>, val sync: Clocked<Int
                 if (chipSelected && romMode) {
                     romDataOut = 1
                     bufDir = BufDirOut  // Transfer to the external bus
+                } else {
+                    bufDir = BufDirIn   // Transfer to the internal bus
                 }
+
             }
             3 -> {
                 if (chipSelected && romMode) {
                     romDataOut = 2
                     bufDir = BufDirOut  // Transfer to the external bus
+                }
+                // Check for IO ops before we update the SRC flag
+                if (extBus.value == WRR.toLong().shr(4).and(0xf)) {
+                    if (srcDetected) {
+                        log.debug("ROM: IO instruction detected")
+                        ioOpDetected = true
+                    } else {
+                        ioOpDetected = false
+                    }
+                } else {
+                    ioOpDetected = false
+                }
+
+                // NOTE: FIM and SRC have the same upper 4 bits
+                // We won't know which instruction it is until the next cycle
+                if (extBus.value == SRC.toLong().shr(4).and(0xf)) {
+                    log.debug("ROM: FIM/SRC instruction detected")
+                    srcDetected = true
+                } else {
+                    srcDetected = false
+                }
+
+                instReg.writeNybbleDirect(1, extBus.value)
+            }
+            4 -> {
+                bufDir = BufDirIn   // Transfer to the internal bus
+                instReg.writeNybbleDirect(0, extBus.value)
+            }
+            5 -> {
+                bufDir = BufDirIn   // Transfer to the internal bus
+            }
+            6 -> {
+                if (srcDetected) {
+                    bufDir = BufDirIn   // Transfer to the internal bus
+                    srcRomID = intBus.read().and(0xf)
+                    if (srcRomID != id) {
+                        log.debug(String.format("ROM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
+                            id, srcRomID))
+                        srcDetected = false
+                    } else {
+                        log.debug(String.format("ROM: SRC command WAS for us. Our chipID=%02X", id))
+                    }
+                }
+                if (ioOpDetected) {
+                    // Copy the data to the internal bus
+                    bufDir = BufDirIn   // Transfer to the internal bus
+                    val cmd = instReg.readDirect()
+                    when (cmd) {
+                        WRR.toLong().and(0xff) -> {
+                            // IO Write
+                            ioBus.reset()
+                            ioBus.write(intBus.read())
+                        }
+                    }
                 }
             }
             7 -> {

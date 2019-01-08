@@ -13,6 +13,10 @@ val BusBackground           = Color(0x606060)
 val BusBackgroundDriving    = Color(0x40A040)
 val BufArrowColor           = Color(0x40f040)
 val AluFill                 = Color(0x00A0A0)
+val LedRedOn                = Color(0xF02020)
+val LedRedOff               = Color(0x700000)
+val LedRedBorder            = Color(0xF08080)
+
 val MainFont                = "Monospaced"
 val MainFontSize            = 24
 val RegisterWidth           = 110
