@@ -88,6 +88,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.PCInc) != 0) {
             addrStack.incrementProgramCounter()
         }
+        if (decoder.readFlag(FlagTypes.PCLoad) != 0) {
+            addrStack.writeProgramCounter(decoder.readFlag(FlagTypes.PCLoad)-1)
+        }
         if (decoder.readFlag(FlagTypes.InstRegLoad) != 0) {
             instReg.writeInstructionRegister(decoder.readFlag(FlagTypes.InstRegLoad)-1)
         }

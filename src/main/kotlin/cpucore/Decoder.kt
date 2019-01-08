@@ -16,6 +16,7 @@ class Decoder(clk: Observable<Int>) {
     var syncSent = false
     var currInstruction = -1     // If >= 0, the current instruction we are processing
     var dblInstruction = 0       // If > 0, this is the current double instruction we are processing
+    var inhibitPCInc = false     // Block the program counter from incrementing
     var decodedInstruction = ""
     var x2IsRead = false         // The X2 cycle is a read from the external bus
     var x3IsRead = false         // The X3 cycle is a read from the external bus
@@ -76,7 +77,7 @@ class Decoder(clk: Observable<Int>) {
     fun clkAndSync() {
         when (clkCount.clocked) {
             6 -> {
-                if (syncSent)
+                if (syncSent && !inhibitPCInc)
                     writeFlag(FlagTypes.PCInc, 1)
                 clkCount.raw = clkCount.clocked + 1
             }
@@ -161,8 +162,8 @@ class Decoder(clk: Observable<Int>) {
             // Note FIN and JIN share the same upper 4 bits
 //            FIN.toInt().and(0xf0).toByte() ->
 //                handleFIN_JIN(fullInst, evalResult)
-//            JCN, JMS, ISZ, JUN ->
-//                handleJCN_JMS_ISZ_JUN(fullInst, evalResult)
+            JCN, JMS, ISZ, JUN ->
+                handleJCN_JMS_ISZ_JUN(this, fullInst.toLong(), evalResult)
             XCH ->
                 handleXCH(this)
             LDM ->

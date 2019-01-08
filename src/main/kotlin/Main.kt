@@ -54,6 +54,7 @@ class Visualizer: JFrame() {
     var lastFpsUpdate = 0L
     var fpsCount = 0
     var fps = 0.0
+    var cpuClockRate = 0.0
 
     var renderingBounds = Rectangle()
     var leftRenderingBounds = Rectangle()
@@ -89,10 +90,12 @@ class Visualizer: JFrame() {
         // Create the graphics
         cpuPanel.initRenderers()
 
-        val startTime = System.currentTimeMillis()
+        var startTime = System.currentTimeMillis()
         var cycleCount = 0
+        var cpuClockCount = 0
         repaint()
         while (!runFlags.quit) {
+            cpuClockCount++
             if (runFlags.stepClock || runFlags.stepCycle || runFlags.freeRun) {
                 LogState(cpuCore!!, rom0!!, log)
                 extDataBus.reset()
@@ -119,16 +122,16 @@ class Visualizer: JFrame() {
                 contentPane.removeAll()
                 prepareGui(runFlags.showLa)
             }
+            val endTime = System.currentTimeMillis()
+            val interval = (endTime - startTime) / 1000.0
+            if (interval >= 1) {
+                cpuClockRate = cpuClockCount / interval
+                cpuClockCount = 0
+                startTime = endTime
+                repaint()
+            }
         }
-        val endTime = System.currentTimeMillis()
-        val interval = (endTime - startTime) / 1000.0
 
-//        println(
-//            String.format(
-//                "Completed %d cycles in %3.2f seconds. Effective Clk speed %3.2f kHz",
-//                loops, interval, (loops / interval) / 1000
-//            )
-//        )
         System.exit(0)
     }
 
@@ -239,7 +242,7 @@ class Visualizer: JFrame() {
                 extBusRenderer.render(g, false)
                 cpuRenderer.render(g)
                 g.color = TextNormal
-                g.drawString(String.format("FPS=%3.2f", fps), 0, height -insets.top - 24)
+                g.drawString(String.format("FPS=%3.2f. CPU Clock Rate=%3.2fkHz", fps, cpuClockRate/1000), 0, height -insets.top - 24)
             }
         }
     }
@@ -281,6 +284,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "CNT", 4, cpuCore!!.getClkCount().toLong())
             la.setChannel(pos++, "SYNC", 1, cpuCore!!.sync.clocked.toLong())
             la.setChannel(pos++, "PC", 12, cpuCore!!.addrStack.getProgramCounter())
+            la.setChannel(pos++, "PC+", 1, cpuCore!!.decoder.readFlag(FlagTypes.PCInc).toLong())
             la.setChannel(pos++, "XBUS", 4, extDataBus.read())
 
             pos = addCpuGroup(pos)
@@ -316,6 +320,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "SEL", 4, cpuCore!!.indexRegisters.index.toLong())
             la.setChannel(pos++, "SPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.IndexLoad).toLong())
             la.setChannel(pos++, "SPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.ScratchPadOut).toLong())
+            la.setChannel(pos++, "PCLD", 4, cpuCore!!.decoder.readFlag(FlagTypes.PCLoad).toLong())
             return pos
         }
         fun addRomGroup(posIn: Int): Int {
