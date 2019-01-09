@@ -2,6 +2,7 @@ import common.*
 import cpucore.CpuCore
 import cpucore.FlagTypes
 import instruction.genLEDCount
+import instruction.genLEDCountUsingAdd
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
@@ -69,12 +70,12 @@ class Visualizer: JFrame() {
         prepareGui(runFlags.showLa)
         addKeyListener(MyKeyListener())
 
-        // Create an off-screen buffer to render to
         renderingBounds = Rectangle(0,0, width - insets.left - insets.right, height - insets.top - insets.bottom)
         leftRenderingBounds = Rectangle(renderingBounds)
         leftRenderingBounds.width = leftWidth
 
-        var clk: ConnectableObservable<Int> = Observable.create { it: Emitter<Int> ->
+        // Main system clock
+        val clk: ConnectableObservable<Int> = Observable.create { it: Emitter<Int> ->
             emitter = it
         }.publish()
         clk.connect()
@@ -84,8 +85,8 @@ class Visualizer: JFrame() {
         rom0 = rom4001.Rom4001(extDataBus, led0Bus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
         led0Bus.init(4, "")
 
-        // Load the ROMs
-        rom0!!.loadProgram(genLEDCount())
+        // Load the ROM(s)
+        rom0!!.loadProgram(genLEDCountUsingAdd())
 
         // Create the graphics
         cpuPanel.initRenderers()
@@ -213,11 +214,11 @@ class Visualizer: JFrame() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
             romRenderer.initRenderer(rom0!!.decoder, romBounds)
             val ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
-            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
+            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 200)
             led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
             val extBusWidth = 30
             val extBusBounds = Rectangle(0,romBounds.y + romBounds.height + extBusWidth/2, leftRenderingBounds.width, 0)
-            extBusRenderer.initRenderer(extDataBus!!, Point(extBusBounds.x, extBusBounds.y), Point(leftRenderingBounds.width, extBusBounds.y), 30)
+            extBusRenderer.initRenderer(extDataBus, Point(extBusBounds.x, extBusBounds.y), Point(leftRenderingBounds.width, extBusBounds.y), 30)
             extBusBounds.height = 10
             val cpuBounds = Rectangle(0,extBusBounds.y+extBusBounds.height, leftRenderingBounds.width, 0)
             cpuRenderer.initRenderer(cpuCore!!, cpuBounds)
@@ -285,6 +286,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "SYNC", 1, cpuCore!!.sync.clocked.toLong())
             la.setChannel(pos++, "PC", 12, cpuCore!!.addrStack.getProgramCounter())
             la.setChannel(pos++, "PC+", 1, cpuCore!!.decoder.readFlag(FlagTypes.PCInc).toLong())
+            la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toLong())
             la.setChannel(pos++, "XBUS", 4, extDataBus.read())
 
             pos = addCpuGroup(pos)
@@ -320,7 +322,6 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "SEL", 4, cpuCore!!.indexRegisters.index.toLong())
             la.setChannel(pos++, "SPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.IndexLoad).toLong())
             la.setChannel(pos++, "SPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.ScratchPadOut).toLong())
-            la.setChannel(pos++, "PCLD", 4, cpuCore!!.decoder.readFlag(FlagTypes.PCLoad).toLong())
             return pos
         }
         fun addRomGroup(posIn: Int): Int {

@@ -8,9 +8,14 @@ class Bus: Maskable() {
     var value = 0L
     var writes = 0
         private set
+    var bufferFollowers = mutableListOf<Pair<String, Buffer>>()
 
     fun init(width: Int, name: String) {
         super.baseInit(width, name)
+    }
+
+    fun addFollower(side: String, buffer: Buffer) {
+        bufferFollowers.add(Pair(side, buffer))
     }
 
     fun write(value: Long) {
@@ -18,6 +23,9 @@ class Bus: Maskable() {
         if (log.isTraceEnabled)
             log.trace("{} written with {}. writes(pre)={}",
                 name, Integer.toHexString(value.toInt()), writes)
+        for (buf in bufferFollowers) {
+            buf.second.notifyBusWrite(buf.first, value)
+        }
         writes++
     }
 

@@ -94,6 +94,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.InstRegLoad) != 0) {
             instReg.writeInstructionRegister(decoder.readFlag(FlagTypes.InstRegLoad)-1)
         }
+        if (decoder.readFlag(FlagTypes.AluMode) != 0) {
+            aluCore.setMode(decoder.readFlag(FlagTypes.AluMode)-1)
+        }
         if (decoder.readFlag(FlagTypes.AccLoad) != 0) {
             aluCore.writeAccumulator()
         }
@@ -124,6 +127,13 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         }
         if (decoder.readFlag(FlagTypes.InstRegOut) > 0) {
             instReg.readInstructionRegister(decoder.readFlag(FlagTypes.InstRegOut)-1)
+        }
+        if (decoder.readFlag(FlagTypes.AluEval) > 0) {
+            aluCore.evaluate()
+            aluCore.readEval()
+        }
+        if (decoder.readFlag(FlagTypes.AluOut) > 0) {
+            aluCore.readEval()
         }
         if (decoder.readFlag(FlagTypes.AccOut) > 0) {
             aluCore.readAccumulator()

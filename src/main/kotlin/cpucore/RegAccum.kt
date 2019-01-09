@@ -16,6 +16,7 @@ fun handleXCH(d: Decoder) {
         // Load the data into the scratchpad register
         d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xf))
         d.writeFlag(FlagTypes.IndexLoad, 1)
+    } else if (d.clkCount.raw == 1) {
         // Swap the temp and accumulator registers
         d.writeFlag(FlagTypes.AccTempSwap, 1)
         d.currInstruction = -1
