@@ -317,7 +317,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "ACCO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccOut).toLong())
             la.setChannel(pos++, "ALUM", 2, cpuCore!!.decoder.readFlag(FlagTypes.AluMode).toLong())
             la.setChannel(pos++, "ALUE", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluEval).toLong())
-            la.setChannel(pos++, "ALU", 4, cpuCore!!.aluCore.alu.outputReg.readDirect())
+            la.setChannel(pos++, "ALU", 4, cpuCore!!.aluCore.alu.value)
             la.setChannel(pos++, "ALUO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluOut).toLong())
             la.setChannel(pos++, "ACC", 4, cpuCore!!.aluCore.accum.readDirect())
             la.setChannel(pos++, "TMPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempLoad).toLong())

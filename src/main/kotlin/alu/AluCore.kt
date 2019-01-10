@@ -131,30 +131,29 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
 class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
     val log = logger()
     val carryMask: Long
-    val outputReg = Register(0L, clk)
     var mode = ""
     var carry = 0L
     var changed = false
+    var value = 0L
 
     init {
-        outputReg.init(dataBus, busWidth, "ALU Output Reg")
         baseInit(busWidth, "ALU")
         carryMask = 1.toLong().shl(busWidth)
     }
 
     fun reset() {
-        outputReg.reset()
+        value = 0L
         mode = AluNone
     }
 
-    fun readOutput() {
-        outputReg.read()
-    }
-
-    fun readOutputDirect(): Long {
-        return outputReg.readDirect()
-    }
-
+//    fun readOutput() {
+//        outputReg.read()
+//    }
+//
+//    fun readOutputDirect(): Long {
+//        return outputReg.readDirect()
+//    }
+//
     fun setCarry() {
         carry = 1L
         changed = true
@@ -203,6 +202,7 @@ class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
         out = out.and(mask)
 //        outputReg.writeDirect(out)
         dataBus.write(out)
+        value = out
         if (log.isDebugEnabled) {
             log.debug(String.format(
                 "** ALU: Evaluated mode %s, A=%X, T=%X, carryIn=%X, out=%X, carry=%X",

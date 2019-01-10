@@ -35,8 +35,8 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             if (it==0) {
                 update()
             } else if (it == 1){
-                clockOut()
             } else if (it == 2){
+                clockOut()
                 process()
             }
         }
@@ -82,6 +82,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         decoder.resetFlags()
     }
 
+    // Update posts data into the registers for the rising edge of the clock (FF setup)
     fun update() {
         if (decoder.readFlag(FlagTypes.InstRegLoad) != 0) {
             instReg.writeInstructionRegister(decoder.readFlag(FlagTypes.InstRegLoad)-1)
@@ -121,32 +122,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.CmRam) > 0) {
             cmRam.raw = decoder.readFlag(FlagTypes.CmRam).inv().and(0xf)
         }
-
-//        // Writes to the internal bus
-//        if (decoder.readFlag(FlagTypes.PCOut) > 0) {
-//            addrStack.readProgramCounter(decoder.readFlag(FlagTypes.PCOut)-1)
-//        }
-//        if (decoder.readFlag(FlagTypes.InstRegOut) > 0) {
-//            instReg.readInstructionRegister(decoder.readFlag(FlagTypes.InstRegOut)-1)
-//        }
-//        if (decoder.readFlag(FlagTypes.AluEval) > 0) {
-//            aluCore.evaluate()
-//            aluCore.readEval()
-//        }
-//        if (decoder.readFlag(FlagTypes.AluOut) > 0) {
-//            aluCore.readEval()
-//        }
-//        if (decoder.readFlag(FlagTypes.AccOut) > 0) {
-//            aluCore.readAccumulator()
-//        }
-//        if (decoder.readFlag(FlagTypes.TempOut) > 0) {
-//            aluCore.readTemp()
-//        }
-//        if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
-//            indexRegisters.read()
-//        }
     }
 
+    // ClockOut writes data to the internal bus and possibly external bus on the rising edge of the clock
     fun clockOut() {
         // Lastly, output to the external bus if needed
         if (decoder.readFlag(FlagTypes.BusDir) == BufDirOut) {

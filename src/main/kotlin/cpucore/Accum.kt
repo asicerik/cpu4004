@@ -22,8 +22,6 @@ fun handleADD(d: Decoder, fullInst: Long) {
     } else if (d.clkCount.raw == 0) {
         // Evaluate the ALU and write the value into the accumulator
         d.writeFlag(FlagTypes.AccLoad, 1)
-    } else if (d.clkCount.raw == 1) {
-        // Evaluate the ALU and write the value into the accumulator
         d.currInstruction = -1
     }
 }
