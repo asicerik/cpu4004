@@ -28,6 +28,8 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
 
     init {
         intDataBus.init(4, "CPU Internal BUS")
+        extDataBus.addFollower("A", buffer)
+//        intDataBus.addFollower("B", buffer)
         clk.subscribe {
             // Process on the falling edge of the clock and prepare all data for the rising edge
             if (it==0) {
@@ -67,6 +69,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     }
 
     fun update() {
+        if (decoder.readFlag(FlagTypes.InstRegLoad) != 0) {
+            instReg.writeInstructionRegister(decoder.readFlag(FlagTypes.InstRegLoad)-1)
+        }
         if (decoder.readFlag(FlagTypes.DecodeInstruction) != 0) {
             var evalResult = true
 //            if c.evaluationFn != nil {
@@ -79,10 +84,17 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         }
 
         if (decoder.readFlag(FlagTypes.IndexSelect) > 0)
-            indexRegisters.select(decoder.readFlag(FlagTypes.IndexSelect))
+            if (decoder.readFlag(FlagTypes.IndexSelect) > 16)
+                indexRegisters.select(intDataBus.value.toInt())
+            else
+                indexRegisters.select(decoder.readFlag(FlagTypes.IndexSelect))
+
 
         if (decoder.readFlag(FlagTypes.ScratchPadInc) != 0) {
             indexRegisters.increment()
+        }
+        if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
+            indexRegisters.read()
         }
 
         if (decoder.readFlag(FlagTypes.PCInc) != 0) {
@@ -91,11 +103,8 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.PCLoad) != 0) {
             addrStack.writeProgramCounter(decoder.readFlag(FlagTypes.PCLoad)-1)
         }
-        if (decoder.readFlag(FlagTypes.InstRegLoad) != 0) {
-            instReg.writeInstructionRegister(decoder.readFlag(FlagTypes.InstRegLoad)-1)
-        }
         if (decoder.readFlag(FlagTypes.AluMode) != 0) {
-            aluCore.setMode(decoder.readFlag(FlagTypes.AluMode)-1)
+            aluCore.setMode(decoder.readFlag(FlagTypes.AluMode))
         }
         if (decoder.readFlag(FlagTypes.AccLoad) != 0) {
             aluCore.writeAccumulator()
@@ -141,15 +150,16 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.TempOut) > 0) {
             aluCore.readTemp()
         }
-        if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
-            indexRegisters.read()
-        }
+//        if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
+//            indexRegisters.read()
+//        }
     }
 
     fun clockOut() {
         // Lastly, output to the external bus if needed
         if (decoder.readFlag(FlagTypes.BusDir) == BufDirOut) {
             buffer.bToA()
+//            buffer.setBusDirectionBtoA()
         } else {
             // Just so the renderer draws the right thing
             buffer.setBusDirectionAToB()

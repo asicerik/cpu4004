@@ -138,7 +138,7 @@ class Visualizer: JFrame() {
 
     fun prepareGui(showLa: Boolean) {
 
-        setLocation(100, 100)
+        setLocation(100, 0)
         title = "j4004 CPU Visualizer"
 
         val mainPanel = JPanel()
@@ -315,6 +315,10 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "INSTO", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegOut).toLong())
             la.setChannel(pos++, "ACCLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccLoad).toLong())
             la.setChannel(pos++, "ACCO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccOut).toLong())
+            la.setChannel(pos++, "ALUM", 2, cpuCore!!.decoder.readFlag(FlagTypes.AluMode).toLong())
+            la.setChannel(pos++, "ALUE", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluEval).toLong())
+            la.setChannel(pos++, "ALU", 4, cpuCore!!.aluCore.alu.outputReg.readDirect())
+            la.setChannel(pos++, "ALUO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluOut).toLong())
             la.setChannel(pos++, "ACC", 4, cpuCore!!.aluCore.accum.readDirect())
             la.setChannel(pos++, "TMPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempLoad).toLong())
             la.setChannel(pos++, "TMPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempOut).toLong())
