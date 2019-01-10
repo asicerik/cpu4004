@@ -122,7 +122,8 @@ class Decoder(clk: Observable<Int>) {
             5 -> {
                 writeFlag(FlagTypes.InstRegLoad, 1) // load the lower nybble of the inst register
                 writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
-                writeFlag(FlagTypes.BusDir, BufDirIn)// Transfer to the external bus
+//                writeFlag(FlagTypes.BusDir, BufDirIn)// Transfer to the external bus
+                writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
             6 -> {
                 writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register

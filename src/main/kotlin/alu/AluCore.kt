@@ -95,7 +95,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     fun readEval() {
-        alu.readOutput()
+        //alu.readOutput()
         aluDrivingBus = true
     }
 
@@ -201,7 +201,8 @@ class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
             }
         }
         out = out.and(mask)
-        outputReg.writeDirect(out)
+//        outputReg.writeDirect(out)
+        dataBus.write(out)
         if (log.isDebugEnabled) {
             log.debug(String.format(
                 "** ALU: Evaluated mode %s, A=%X, T=%X, carryIn=%X, out=%X, carry=%X",

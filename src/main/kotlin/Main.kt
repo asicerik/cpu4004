@@ -106,6 +106,7 @@ class Visualizer: JFrame() {
 
                 //Thread.sleep(100)
                 emitter!!.onNext(1)
+                emitter!!.onNext(2)
                 if (runFlags.showLa)
                     laPanel.updateLa(1)
 //                Thread.sleep(250)
@@ -307,7 +308,6 @@ class Visualizer: JFrame() {
             var pos = posIn
             la.setChannel(pos++, "CPUBUS", 4, cpuCore!!.intDataBus.read())
             la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toLong())
-            la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toLong())
             la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toLong())
             la.setChannel(pos++, "INST", 8, cpuCore!!.instReg.getInstructionRegister())
             la.setChannel(pos++, "CURR", 8, cpuCore!!.decoder.currInstruction.toLong().and(0xff))
