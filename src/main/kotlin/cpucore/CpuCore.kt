@@ -124,7 +124,6 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     fun clockOut() {
         // Lastly, output to the external bus if needed
         if (decoder.readFlag(FlagTypes.BusDir) == BufDirOut) {
-//            buffer.bToA()
             buffer.setBusDirectionBtoA()
         } else {
             // Just so the renderer draws the right thing

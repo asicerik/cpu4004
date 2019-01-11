@@ -5,6 +5,7 @@ import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -28,12 +29,18 @@ class JumpFetchTests {
     @Nested
     inner class JumpTests {
         @Test
-        fun sync() {
+        fun JUN() {
             core.reset()
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(res.second).isEqualTo(7)
+            verifyJumpExtended(core, JMS.toLong(), true, true)
+            var nextAddr = 0xabdL
+            for (i in 0..3) {
+                var addr = runOneCycle(core, NOP.toLong())
+                assertThat(addr).isEqualTo(nextAddr)
+                nextAddr++
+            }
         }
     }
 }

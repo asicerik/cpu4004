@@ -10,7 +10,7 @@ fun handleJCN_JMS_ISZ_JUN(d: Decoder, fullInst: Long, evalResult: Boolean)  {
         } else if (opr == ISZ) {
             d.writeFlag(FlagTypes.EvaluateISZ, 1)
         }
-        if (d.clkCount.raw == 5) {
+        if (d.clkCount.raw == 6) {
             if (opr == JCN) {
                 d.setDecodedInstructionString(String.format("JCN %X", d.currInstruction.and(0xf)))
             } else if (opr == JUN) {
@@ -20,9 +20,6 @@ fun handleJCN_JMS_ISZ_JUN(d: Decoder, fullInst: Long, evalResult: Boolean)  {
             } else if (opr == ISZ) {
                 d.setDecodedInstructionString(String.format("ISZ %X", d.currInstruction.and(0xf)))
             }
-
-            //d.writeFlag(FlagTypes.InstRegOut, 1)
-        } else if (d.clkCount.raw == 6) {
             if (opr == ISZ) {
                 d.writeFlag(FlagTypes.IndexSelect, (d.currInstruction.and(0xf)))
                 d.writeFlag(FlagTypes.ScratchPadInc, 1)
