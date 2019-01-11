@@ -68,6 +68,6 @@ class IoBitRenderer {
         g.color = LedRedBorder
         g.drawOval(centerX, centerY, radius*2+2, radius*2+2)
         g.color = TextNormal
-        g.drawString(name, bounds.x + bounds.width+10, bounds.y+bounds.height+5)
+        g.drawString(name, bounds.x + (bounds.width*1.5).toInt(), bounds.y+bounds.height+5)
     }
 }

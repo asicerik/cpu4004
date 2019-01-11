@@ -179,8 +179,8 @@ class Decoder(clk: Observable<Int>) {
 //                handleBBL(fullInst, evalResult)
             ADD ->
                 handleADD(this, fullInst.toLong())
-//            SUB ->
-//                handleSUB(fullInst, evalResult)
+            SUB ->
+                handleSUB(this, fullInst.toLong())
 //            // Collectively, all the accumulator instructions
 //            ACC ->
 //                handleACC(fullInst, evalResult)

@@ -33,11 +33,10 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         clk.subscribe {
             // Process on the falling edge of the clock and prepare all data for the rising edge
             if (it==0) {
+                process()
                 update()
             } else if (it == 1){
-            } else if (it == 2){
                 clockOut()
-                process()
             }
         }
     }
@@ -97,9 +96,6 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.PCLoad) != 0) {
             addrStack.writeProgramCounter(decoder.readFlag(FlagTypes.PCLoad)-1)
         }
-        if (decoder.readFlag(FlagTypes.AluMode) != 0) {
-            aluCore.setMode(decoder.readFlag(FlagTypes.AluMode))
-        }
         if (decoder.readFlag(FlagTypes.AccLoad) != 0) {
             aluCore.writeAccumulator()
         }
@@ -141,6 +137,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         }
         if (decoder.readFlag(FlagTypes.InstRegOut) > 0) {
             instReg.readInstructionRegister(decoder.readFlag(FlagTypes.InstRegOut)-1)
+        }
+        if (decoder.readFlag(FlagTypes.AluMode) != 0) {
+            aluCore.setMode(decoder.readFlag(FlagTypes.AluMode))
         }
         if (decoder.readFlag(FlagTypes.AluEval) > 0) {
             aluCore.evaluate()

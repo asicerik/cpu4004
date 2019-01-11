@@ -106,7 +106,6 @@ class Visualizer: JFrame() {
 
                 //Thread.sleep(100)
                 emitter!!.onNext(1)
-                emitter!!.onNext(2)
                 if (runFlags.showLa)
                     laPanel.updateLa(1)
 //                Thread.sleep(250)
@@ -215,7 +214,7 @@ class Visualizer: JFrame() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
             romRenderer.initRenderer(rom0!!.decoder, romBounds)
             val ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
-            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 200)
+            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
             led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
             val extBusWidth = 30
             val extBusBounds = Rectangle(0,romBounds.y + romBounds.height + extBusWidth/2, leftRenderingBounds.width, 0)

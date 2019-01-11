@@ -125,5 +125,26 @@ class CpuCoreTest {
             val expVal = valA + valB
             assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
         }
+        @Test
+        fun SUB() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            val valA = 6L
+            val valB = 9L
+            // Write directly to an index register
+            core.indexRegisters.writeDirect(5, valA)
+            // Write the other operand to the accumulator
+            // Load the accumulator
+            runOneCycle(core, LDM.toLong().or(valB))
+            // Run the add
+            runOneCycle(core, SUB.toLong().or(0x5))
+
+            // Accumulator should now have the sum
+            val expVal = valB - valA
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+        }
+
     }
 }
