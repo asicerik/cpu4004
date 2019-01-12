@@ -80,3 +80,30 @@ fun handleJCN_JMS_ISZ_JUN(d: Decoder, fullInst: Long, evalResult: Boolean)  {
     }
 }
 
+// If these functions return false, conditional jumps are blocked
+fun evalulateJCN(c: CpuCore): Boolean {
+    // Not sure how the real CPU does this, so I am cutting corners here
+    var condititonFlags = c.aluCore.readTempDirect()
+    var aluFlags = c.aluCore.getFlags()
+    var testBitFlag     = condititonFlags.toInt().and(0x1)
+    var carryBitFlag    = condititonFlags.shr(1).toInt().and(0x1)
+    var zeroBitFlag     = condititonFlags.shr(2).toInt().and(0x1)
+    var invertBitFlag   = condititonFlags.shr(3).toInt().and(0x1)
+    var result = true
+    if (invertBitFlag == 0) {
+        result = ((carryBitFlag == 0) || (aluFlags.carry == 1)) &&
+                 ((zeroBitFlag == 0) || (aluFlags.zero == 1))
+    } else {
+        result = ((carryBitFlag == 1) && (aluFlags.carry == 0)) ||
+                ((zeroBitFlag == 1) && (aluFlags.zero == 0))
+    }
+    c.log.debug(String.format("evalulateJCN: conditionalFlags=%X, aluFlags=%b. Result=%b", condititonFlags, aluFlags, result))
+    return result
+}
+
+fun evalulateISZ(c: CpuCore): Boolean {
+    var condition = c.indexRegisters.isRegisterZero()
+    c.log.debug(String.format("evalulateISZ: Result=%b", condition))
+    return !condition
+}
+

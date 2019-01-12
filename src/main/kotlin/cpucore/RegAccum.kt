@@ -35,7 +35,7 @@ fun handleLD(d: Decoder) {
     if (d.clkCount.raw == 6) {
         d.setDecodedInstructionString(String.format("LD %X", d.currInstruction.and(0xf)))
         // Output the current scratchpad register
-        d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xf))
+        d.writeFlag(FlagTypes.IndexSelect, 17)//d.currInstruction.and(0xf))
         d.writeFlag(FlagTypes.ScratchPadOut, 1)
     } else if (d.clkCount.raw == 7) {
         // Load the data into the Accumulator register

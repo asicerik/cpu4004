@@ -62,6 +62,19 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
     return Pair(addr, ioVal)
 }
 
+fun loadRegisterPair(core: CpuCore, data: Long, regPair: Long) : Long {
+    // Load the accumulator with the lower 4 bits
+    var nextAddr = runOneCycle(core, LDM.toLong().or(data.and(0xf)))
+    // Swap the accumulator with the lower register pair
+    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)))
+    // Load the accumulator with the higher 4 bits
+    nextAddr = runOneCycle(core, LDM.toLong().or(data.shr(4).and(0xf)))
+    // Swap the accumulator with the lower register pair
+    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)+1))
+    return nextAddr
+}
+
+
 fun verifyJump(core: CpuCore, instruction: Long, jumpExpected: Boolean) {
     verifyJumpExtended(core, instruction, jumpExpected, false)
 }

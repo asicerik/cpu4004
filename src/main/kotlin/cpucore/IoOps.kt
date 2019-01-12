@@ -1,6 +1,11 @@
 package cpucore
 
 fun handleFIM_SRC(d: Decoder, fullInst: Long) {
+    // We need to wait until clock 6 to know what to do here
+    if (d.clkCount.raw == 5) {
+        d.decodeAgain = true
+        return
+    }
     if (fullInst.and(1) == 0L) {
         d.setDecodedInstructionString("FIM")
     } else {
@@ -24,6 +29,7 @@ fun handleWRR(d: Decoder) {
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)
+        d.x3IsRead = false
         d.currInstruction = -1
     }
 }

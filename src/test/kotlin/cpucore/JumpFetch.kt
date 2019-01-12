@@ -42,5 +42,39 @@ class JumpFetchTests {
                 nextAddr++
             }
         }
+        @Test
+        fun JCN() {
+            core.reset()
+            Assertions.assertThat(core.sync.clocked).isEqualTo(1)
+            var res = waitForSync(core)
+            Assertions.assertThat(res.first).isEqualTo(true)
+            // No flags set, should jump
+            var conditionFlags = 0L
+            var jumpExpected = true
+            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+
+            // Carry bit should not be set, no jump
+            conditionFlags = 2L
+            jumpExpected = false
+            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+
+            // Accumulator bit should be set, jump
+            conditionFlags = 4L
+            jumpExpected = true
+            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+
+            // Load the accumulator and verify no jump
+            runOneCycle(core, LDM.toLong().or(5))
+            conditionFlags = 4L
+            jumpExpected = false
+            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+
+            // Run the inverse test
+            runOneCycle(core, LDM.toLong().or(5))
+            conditionFlags = 0xCL
+            jumpExpected = true
+            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+        }
+
     }
 }

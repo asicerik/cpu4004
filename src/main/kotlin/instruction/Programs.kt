@@ -23,7 +23,7 @@ fun genLEDCount(): List<Byte> {
 
 fun genLEDCountUsingAdd(): List<Byte> {
     val data = mutableListOf<Byte>()
-    addInstruction(data, LDM.or(7))       // Load 0 into the accumulator (chip ID)
+    addInstruction(data, LDM.or(0))       // Load 0 into the accumulator (chip ID)
     addInstruction(data, XCH.or(2))       // Swap accumulator with r2
     addInstruction(data, LDM.or(1))       // Load 1 into the accumulator for the increment value
     addInstruction(data, XCH.or(4))       // Swap accumulator with r4

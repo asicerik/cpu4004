@@ -146,5 +146,24 @@ class CpuCoreTest {
             assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
         }
 
+        @Test
+        fun SRC() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            var regPair = 2L
+            var expSrcVal =0xCL
+            // Populate the scratch registers with out expected value
+            loadRegisterPair(core, 0xC, regPair)
+
+            // Use a LDM command to clear the lower 1/2 of the instruction register.
+            // This is to make sure we don't decode a FIM command by mistake
+            runOneCycle(core, LDM.toLong().or(0x0))
+
+            // Run the SRC command
+            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            assertThat(res2.second).isEqualTo(expSrcVal)
+        }
     }
 }

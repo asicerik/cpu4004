@@ -33,6 +33,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         accumBus.init(BusWidth, "")
         tempBus.init(BusWidth, "")
         flagsBus.init(BusWidth, "")
+        updateFlags()
     }
 
     fun reset() {
@@ -40,6 +41,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         temp.reset()
         flags.reset()
         alu.reset()
+        updateFlags()
         currentRamBank = 0L
     }
 
@@ -52,7 +54,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
 
     fun writeAccumulator() {
         accum.write()
-        log.trace(String.format("ALU write with %X", dataBus.read()))
+        log.trace(String.format("ACCUM write with %X", dataBus.read()))
     }
 
     fun writeTemp() {
@@ -68,9 +70,17 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         temp.read()
     }
 
+    fun readTempDirect(): Long {
+        return temp.readDirect()
+    }
+
     fun readFlags() {
         flags.read()
         flagsDrivingBus = true
+    }
+
+    fun readFlagsDirect(): Long {
+        return flags.readDirect()
     }
 
     fun setMode(mode: Int) {
@@ -100,7 +110,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     fun getFlags(): AluFlags {
-        val flagsRaw = flags.readDirect()
+        val flagsRaw = updateFlags()
         val flagsVal = AluFlags(0,0)
         if (flagsRaw.and(FlagPosZero) != 0L) {
             flagsVal.zero = 1
@@ -111,20 +121,21 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         return flagsVal
     }
 
-    fun updateFlags() {
+    fun updateFlags(): Long {
         val accum = accum.readDirect()
         var flagsVal = flags.readDirect()
         if (accum == 0L) {
-            flagsVal.or(FlagPosZero)
+            flagsVal = flagsVal.or(FlagPosZero)
         } else {
-            flagsVal.and(FlagPosZero.inv())
+            flagsVal = flagsVal.and(FlagPosZero.inv())
         }
         if (alu.carry != 0L) {
-            flagsVal.or(FlagPosCarry)
+            flagsVal = flagsVal.or(FlagPosCarry)
         } else {
-            flagsVal.and(FlagPosCarry.inv())
+            flagsVal = flagsVal.and(FlagPosCarry.inv())
         }
         flags.writeDirect(flagsVal)
+        return flagsVal
     }
 }
 

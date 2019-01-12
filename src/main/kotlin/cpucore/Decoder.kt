@@ -6,6 +6,7 @@ import common.BufDirOut
 import common.Clocked
 import io.reactivex.Observable
 import utils.logger
+import kotlin.experimental.and
 import kotlin.experimental.or
 
 class Decoder(clk: Observable<Int>) {
@@ -16,6 +17,7 @@ class Decoder(clk: Observable<Int>) {
     var syncSent = false
     var currInstruction = -1     // If >= 0, the current instruction we are processing
     var dblInstruction = 0       // If > 0, this is the current double instruction we are processing
+    var decodeAgain = false      // Set when an instruction needs another decode cycle
     var inhibitPCInc = false     // Block the program counter from incrementing
     var decodedInstruction = ""
     var x2IsRead = false         // The X2 cycle is a read from the external bus
@@ -92,7 +94,7 @@ class Decoder(clk: Observable<Int>) {
 
     fun calculateFlags() {
         // Continue to decode instructions after clock 5
-        if (clkCount.raw != 5 && clkCount.raw != 6 && currInstruction > 0) {
+        if (clkCount.raw != 5 && currInstruction > 0) {
             decodeCurrentInstruction(false)
         }
 
@@ -126,7 +128,10 @@ class Decoder(clk: Observable<Int>) {
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
             6 -> {
-                writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
+                if (decodeAgain) {
+                    writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
+                    decodeAgain = false
+                }
                 if (x2IsRead)
                     writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
                 else
@@ -184,6 +189,8 @@ class Decoder(clk: Observable<Int>) {
 //            // Collectively, all the accumulator instructions
 //            ACC ->
 //                handleACC(fullInst, evalResult)
+            WRR.and(0xF0.toByte()), RDR.and(0xF0.toByte()) ->
+                decodeAgain = true
         }
 
         // These instructions require decoding the entire 8 bits

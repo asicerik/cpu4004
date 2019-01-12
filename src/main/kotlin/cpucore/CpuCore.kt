@@ -25,6 +25,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     val addrStack = AddressStack(intDataBus, clk)           // Address stack for program counter and stack
     val indexRegisters = IndexRegisters(intDataBus, clk)    // Index( scratchpad registers)
     private var syncSent = false
+    private var evaluationFn: ((CpuCore) -> Boolean)? = null
 
     init {
         intDataBus.init(4, "CPU Internal BUS")
@@ -57,10 +58,10 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         //update()
         if (decoder.readFlag(FlagTypes.DecodeInstruction) != 0) {
             var evalResult = true
-//            if c.evaluationFn != nil {
-//                evalResult = c.evaluationFn()
-//            }
-//            c.evaluationFn = nil
+            if (evaluationFn != null) {
+                evalResult = evaluationFn!!.invoke(this)
+            }
+            evaluationFn = null
 
             // Write the completed instruction to the decoder
             decoder.setCurrentInstruction(instReg.getInstructionRegister(), evalResult)
@@ -161,5 +162,12 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.ScratchPadOut) > 0) {
             indexRegisters.read()
         }
+        if (decoder.readFlag(FlagTypes.EvaluateJCN) > 0) {
+            evaluationFn = ::evalulateJCN
+        }
+        if (decoder.readFlag(FlagTypes.EvaluateISZ) > 0) {
+            evaluationFn = ::evalulateISZ
+        }
+
     }
 }
