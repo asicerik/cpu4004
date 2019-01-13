@@ -298,5 +298,109 @@ class AccTests {
             assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
             assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
         }
+        @Test
+        fun ACC_DAA() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
+
+            // DAA - for accumulator values > 9 (or if carry is set), increment by 6
+            // This operation can set the carry bit, but will not clear it
+            // Load the accumulator with 9
+            runOneCycle(core, LDM.toLong().or(9))
+            // Run the DAA cycle
+            runOneCycle(core, DAA.toLong())
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(9)
+
+            // Now set the carry
+            runOneCycle(core, STC.toLong())
+            // Run the DAA cycle
+            runOneCycle(core, DAA.toLong())
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(15)
+
+            // Load the accumulator with 10
+            runOneCycle(core, LDM.toLong().or(10))
+            // Clear the carry bit
+            runOneCycle(core, CLC.toLong())
+            // Run the DAA cycle
+            runOneCycle(core, DAA.toLong())
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0)
+        }
+        @Test
+        fun ACC_KBP() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
+
+            // KBP = Keyboard Process
+            // If the accumulator is 0, it is left unchanged
+            // Load the accumulator with 0
+            runOneCycle(core, LDM.toLong().or(0))
+            runOneCycle(core, KBP.toLong())
+
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0)
+
+            for (i in 1..15) {
+                // If the accumulator has 1 bit set, it will set the accumulator
+                // with the bit position (1 based) that was set
+                // Otherwise, it will set the accumulator to 15
+                // Load the accumulator with i
+                runOneCycle(core, LDM.toLong().or(i.toLong()))
+                runOneCycle(core, KBP.toLong())
+
+                assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+                assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
+                when (i) {
+                    1 -> {
+                        assertThat(core.aluCore.accum.readDirect()).isEqualTo(1.toLong())
+                    }
+                    2 -> {
+                        assertThat(core.aluCore.accum.readDirect()).isEqualTo(2.toLong())
+                    }
+                    4 -> {
+                        assertThat(core.aluCore.accum.readDirect()).isEqualTo(3.toLong())
+                    }
+                    8 -> {
+                        assertThat(core.aluCore.accum.readDirect()).isEqualTo(4.toLong())
+                    }
+                    else -> {
+                        assertThat(core.aluCore.accum.readDirect()).isEqualTo(15.toLong())
+                    }
+                }
+            }
+        }
+        @Test
+        fun ACC_DCL() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
+            assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
+
+            // DCL - set the RAM selection register
+            // First make sure it is zero
+            assertThat(core.aluCore.currentRamBank).isEqualTo(0L)
+            // Set the ram bank
+            val ramBank = 7L
+            runOneCycle(core, LDM.toLong().or(ramBank))
+            runOneCycle(core, DCL.toLong())
+            // Now make sure it has updated
+            assertThat(core.aluCore.currentRamBank).isEqualTo(ramBank)
+        }
     }
 }
