@@ -179,3 +179,25 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
         }
     }
 }
+
+fun handleBBL(d: Decoder) {
+    // We need to wait until clock 6 to know what to do here
+    if (d.clkCount.raw == 5 && d.dblInstruction == 0) {
+        d.decodeAgain = true
+        return
+    }
+
+    // Jump indirect to address in specified register pair
+    if (d.clkCount.raw == 6) {
+        d.setDecodedInstructionString(String.format("BBL %X", d.currInstruction.and(0xf)))
+        // Pop the address stack
+        d.writeFlag(FlagTypes.StackPop, 1)
+        // Store the passed data into the accumulator
+        d.writeFlag(FlagTypes.InstRegOut, 1)
+        // NOTE : the stack pointer contains the address where the jump was.
+        // The incrementer will fire and add 1
+    } else if (d.clkCount.raw == 7) {
+        // Load the data into the accumulator
+        d.writeFlag(FlagTypes.AccLoad, 1)
+    }
+}

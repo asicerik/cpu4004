@@ -184,8 +184,8 @@ class Decoder(clk: Observable<Int>) {
                 handleINC(this)
             FIM, SRC ->
                 handleFIM_SRC(this, fullInst.toLong())
-//            BBL ->
-//                handleBBL(fullInst, evalResult)
+            BBL ->
+                handleBBL(this)
             ADD ->
                 handleADD(this, fullInst.toLong())
             SUB ->

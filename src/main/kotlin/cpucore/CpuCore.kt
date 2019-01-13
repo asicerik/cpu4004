@@ -97,6 +97,12 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.PCLoad) != 0) {
             addrStack.writeProgramCounter(decoder.readFlag(FlagTypes.PCLoad)-1)
         }
+        if (decoder.readFlag(FlagTypes.StackPush) != 0) {
+            addrStack.stackPush()
+        }
+        if (decoder.readFlag(FlagTypes.StackPop) != 0) {
+            addrStack.stackPop()
+        }
         if (decoder.readFlag(FlagTypes.AccLoad) != 0) {
             aluCore.writeAccumulator()
         }

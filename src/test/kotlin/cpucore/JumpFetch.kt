@@ -43,6 +43,52 @@ class JumpFetchTests {
             }
         }
         @Test
+        fun JMS() {
+            core.reset()
+            Assertions.assertThat(core.sync.clocked).isEqualTo(1)
+            var res = waitForSync(core)
+            Assertions.assertThat(res.first).isEqualTo(true)
+            verifyJumpExtended(core, JMS.toLong(), true, true)
+            // Stack pointer should now be 1
+            assertThat(core.addrStack.stackPointer).isEqualTo(1)
+            var nextAddr = 0xabdL
+            for (i in 0..3) {
+                var addr = runOneCycle(core, NOP.toLong())
+                assertThat(addr).isEqualTo(nextAddr)
+                nextAddr++
+            }
+        }
+        @Test
+        fun BBL() {
+            core.reset()
+            Assertions.assertThat(core.sync.clocked).isEqualTo(1)
+            var res = waitForSync(core)
+            Assertions.assertThat(res.first).isEqualTo(true)
+            verifyJumpExtended(core, JMS.toLong(), true, true)
+            // Stack pointer should now be 1
+            assertThat(core.addrStack.stackPointer).isEqualTo(1)
+            var nextAddr = 0xabdL
+            for (i in 0..3) {
+                var addr = runOneCycle(core, NOP.toLong())
+                assertThat(addr).isEqualTo(nextAddr)
+                nextAddr++
+            }
+
+            // Now run the BBL and we should be back where we were
+            val accumVal: Long = 0x9
+            var addr = runOneCycle(core, BBL.toLong().or(accumVal))
+            // Stack pointer should now be 0
+            assertThat(core.addrStack.stackPointer).isEqualTo(0)
+
+            // Address should be 1 after where the jump was
+            addr = runOneCycle(core, NOP.toLong())
+            assertThat(addr).isEqualTo(1)
+
+            // Finally, the accumulator should have the right value in it
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(accumVal)
+        }
+
+        @Test
         fun JCN() {
             core.reset()
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
