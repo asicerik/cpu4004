@@ -154,7 +154,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.TempOut) > 0) {
             aluCore.readTemp()
         }
-        if (decoder.readFlag(FlagTypes.IndexSelect) > 0)
+        if (decoder.readFlag(FlagTypes.IndexSelect) >= 0)
             if (decoder.readFlag(FlagTypes.IndexSelect) > 16)
                 indexRegisters.select(intDataBus.value.toInt())
             else

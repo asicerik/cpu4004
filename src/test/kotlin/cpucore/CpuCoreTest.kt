@@ -184,5 +184,34 @@ class CpuCoreTest {
             assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt())).isEqualTo(romVal.shr(4).and(0xf))
             assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt()+1)).isEqualTo(romVal.and(0xf))
         }
-    }
+        @Test
+        fun FIN() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            var regPair = 2L
+            var romAddr:Long = 0xDE
+            var romData:Long = 0x77
+
+            // Populate scratch registers pair 0 with out expected address
+            loadRegisterPair(core, romAddr, 0)
+
+            // Run the command and verify the address on the next cycle
+            var addr = runOneCycle(core, FIN.toLong().or(regPair.shl(1)))
+
+            // When the fetch is done, we should resume where we left off
+            var expAddr = addr + 1
+
+            // Run the next cycle and provide the ROM read data
+            addr = runOneCycle(core, romData)
+            assertThat(addr).isEqualTo(romAddr)
+
+            // Run a final cycle to see where the program counter ended up
+            addr = runOneCycle(core, romData)
+            assertThat(addr).isEqualTo(expAddr)
+        }
+
+
+}
 }

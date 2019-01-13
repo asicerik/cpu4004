@@ -19,6 +19,7 @@ class Decoder(clk: Observable<Int>) {
     var dblInstruction = 0       // If > 0, this is the current double instruction we are processing
     var decodeAgain = false      // Set when an instruction needs another decode cycle
     var inhibitPCInc = false     // Block the program counter from incrementing
+    var inhibitPC = false        // Don't output program counter on the bus
     var decodedInstruction = ""
     var x2IsRead = false         // The X2 cycle is a read from the external bus
     var x3IsRead = false         // The X3 cycle is a read from the external bus
@@ -102,15 +103,18 @@ class Decoder(clk: Observable<Int>) {
         // as our index. That way everything is not off by one
         when (clkCount.raw) {
             0 -> {
-                writeFlag(FlagTypes.PCOut, 1)   // Output nybble 0
+                if (!inhibitPC)
+                    writeFlag(FlagTypes.PCOut, 1)   // Output nybble 0
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
             1 -> {
-                writeFlag(FlagTypes.PCOut, 2)   // Output nybble 1
+                if (!inhibitPC)
+                    writeFlag(FlagTypes.PCOut, 2)   // Output nybble 1
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
             2 -> {
-                writeFlag(FlagTypes.PCOut, 3)   // Output nybble 2
+                if (!inhibitPC)
+                    writeFlag(FlagTypes.PCOut, 3)   // Output nybble 2
                 writeFlag(FlagTypes.CmRom, 1)   // Enable the ROM(s)
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
             }
@@ -166,8 +170,8 @@ class Decoder(clk: Observable<Int>) {
         val fullInst = currInstruction.toByte()
         when (opr) {
             // Note FIN and JIN share the same upper 4 bits
-//            FIN.toInt().and(0xf0).toByte() ->
-//                handleFIN_JIN(fullInst, evalResult)
+            FIN.toInt().and(0xf0).toByte() ->
+                handleFIN_JIN(this, fullInst.toLong())
             JCN, JMS, ISZ, JUN ->
                 handleJCN_JMS_ISZ_JUN(this, fullInst.toLong(), evalResult)
             XCH ->

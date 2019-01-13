@@ -107,3 +107,73 @@ fun evalulateISZ(c: CpuCore): Boolean {
     return !condition
 }
 
+fun handleFIN_JIN(d: Decoder, fullInst: Long) {
+    // We need to wait until clock 6 to know what to do here
+    if (d.clkCount.raw == 5 && d.dblInstruction == 0) {
+        d.decodeAgain = true
+        return
+    }
+
+    if (fullInst.and(0xf1) == JIN.toLong()) {
+        // Jump indirect to address in specified register pair
+        if (d.clkCount.raw == 6) {
+            d.setDecodedInstructionString(String.format("JIN %X", d.currInstruction.and(0xe)))
+            // Output the lower address to the program counter
+            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+0) // Note - we are chopping bit 0
+            d.writeFlag(FlagTypes.ScratchPadOut, 1)
+            // Block the PC increment
+            d.inhibitPCInc = true
+        } else if (d.clkCount.raw == 7) {
+            // Load the lowest 4 bits into the PC
+            d.writeFlag(FlagTypes.PCLoad, 1)
+
+            // Output the lower address to the program counter
+            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+1) // Note - we are chopping bit 0
+            d.writeFlag(FlagTypes.ScratchPadOut, 1)
+        } else if (d.clkCount.raw == 0) {
+            // Load the middle 4 bits into the PC
+            d.writeFlag(FlagTypes.PCLoad, 2)
+            d.currInstruction = -1
+            // Unblock the PC increment
+            d.inhibitPCInc = false
+        }
+    } else if (fullInst.and(0xf1) == FIN.toLong()) {
+        // Fetch indirect to address in register pair 0
+        // then store the result in specified register pair
+        if (d.clkCount.raw == 0) {
+            // Output the lower address to the data bus
+            d.writeFlag(FlagTypes.IndexSelect, 0)
+            d.writeFlag(FlagTypes.ScratchPadOut, 1)
+            // UnBlock the PC increment
+            d.inhibitPCInc = false
+            // Disable the program counter from using the bus
+            d.inhibitPC = true
+            // Mark this as a double instruction to prevent the instruction register
+            // from being clobbered
+            d.dblInstruction = d.currInstruction
+        } else if (d.clkCount.raw == 1) {
+            // Output the middle address to the data bus
+            d.writeFlag(FlagTypes.IndexSelect, 1)
+            d.writeFlag(FlagTypes.ScratchPadOut, 1)
+        } else if (d.clkCount.raw == 2) {
+            // Unblock the PC
+            d.inhibitPC = false
+        } else if (d.clkCount.raw == 3 && d.dblInstruction > 0) {
+            d.setDecodedInstructionString(String.format("FIN %X", d.currInstruction.and(0xf)))
+            // Load the ROM data into the scratch pad register pair 0
+            d.writeFlag(FlagTypes.IndexSelect, d.dblInstruction.and(0xe)+0) // Note - we are chopping bit 0
+        } else if (d.clkCount.raw == 4 && d.dblInstruction > 0) {
+            // Load the ROM data into the scratch pad register pair 1
+            d.writeFlag(FlagTypes.IndexSelect, d.dblInstruction.and(0xe)+1) // Note - we are chopping bit 0
+            d.writeFlag(FlagTypes.IndexLoad, 1)
+        } else if (d.clkCount.raw == 5 && d.dblInstruction > 0) {
+            d.writeFlag(FlagTypes.IndexLoad, 1)
+            // Done
+            d.dblInstruction = 1
+            d.currInstruction = -1
+        } else if (d.clkCount.raw == 6 && d.dblInstruction <= 0) {
+            // Block the PC increment
+            d.inhibitPCInc = true
+        }
+    }
+}
