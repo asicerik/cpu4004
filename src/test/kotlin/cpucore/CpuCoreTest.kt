@@ -211,7 +211,25 @@ class CpuCoreTest {
             addr = runOneCycle(core, romData)
             assertThat(addr).isEqualTo(expAddr)
         }
+        @Test
+        fun JIN() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            var regPair = 2L
+            var romAddr: Long = 0xDE
+            var romData: Long = 0x77
 
+            // Populate scratch registers pair 0 with out expected address
+            loadRegisterPair(core, romAddr, 0)
+
+            // Run the command and verify the address on the next cycle
+            var addr = runOneCycle(core, FIN.toLong().or(regPair.shl(1)))
+
+            addr = runOneCycle(core, romData)
+            assertThat(addr).isEqualTo(romAddr)
+        }
 
 }
 }
