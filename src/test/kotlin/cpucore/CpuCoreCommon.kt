@@ -45,10 +45,10 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
             addr = addr.or(core.extDataBus.read().shl(i * 4))
         }
         if (i == 6) {
-            ioVal = core.extDataBus.read()
+            ioVal = core.extDataBus.read().shl(4)
         }
         if (i == 7) {
-            ioVal = ioVal.or(core.extDataBus.read().shl(4))
+            ioVal = ioVal.or(core.extDataBus.read())
         }
         emitter!!.onNext(1)
         if (i == 2) {
@@ -65,12 +65,12 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
 fun loadRegisterPair(core: CpuCore, data: Long, regPair: Long) : Long {
     // Load the accumulator with the lower 4 bits
     var nextAddr = runOneCycle(core, LDM.toLong().or(data.and(0xf)))
-    // Swap the accumulator with the lower register pair
-    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)))
+    // Swap the accumulator with the odd register
+    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)+1))
     // Load the accumulator with the higher 4 bits
     nextAddr = runOneCycle(core, LDM.toLong().or(data.shr(4).and(0xf)))
-    // Swap the accumulator with the lower register pair
-    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)+1))
+    // Swap the accumulator with the even register
+    nextAddr = runOneCycle(core, XCH.toLong().or(regPair.shl(1)))
     return nextAddr
 }
 

@@ -45,11 +45,17 @@ fun handleLD(d: Decoder) {
 }
 
 fun handleINC(d: Decoder) {
+    // We need to wait until clock 6 to know what to do here
+    if (d.clkCount.raw == 5 && d.dblInstruction == 0) {
+        d.decodeAgain = true
+        return
+    }
     // Increment an index register
     if (d.clkCount.raw == 6) {
         d.setDecodedInstructionString(String.format("INC %X", d.currInstruction.and(0xf)))
         // Select the scratchpad register and set the increment flag
         d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xf))
+    } else if (d.clkCount.raw == 7) {
         d.writeFlag(FlagTypes.ScratchPadInc, 1)
         d.currInstruction = -1
     }

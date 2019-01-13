@@ -142,7 +142,8 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
         // then store the result in specified register pair
         if (d.clkCount.raw == 0) {
             // Output the lower address to the data bus
-            d.writeFlag(FlagTypes.IndexSelect, 0)
+            // According to the datasheet, the odd register contains the lower 4 bits of address
+            d.writeFlag(FlagTypes.IndexSelect, 1)
             d.writeFlag(FlagTypes.ScratchPadOut, 1)
             // UnBlock the PC increment
             d.inhibitPCInc = false
@@ -153,7 +154,8 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
             d.dblInstruction = d.currInstruction
         } else if (d.clkCount.raw == 1) {
             // Output the middle address to the data bus
-            d.writeFlag(FlagTypes.IndexSelect, 1)
+            // According to the datasheet, the even register contains the upper 4 bits of address
+            d.writeFlag(FlagTypes.IndexSelect, 0)
             d.writeFlag(FlagTypes.ScratchPadOut, 1)
         } else if (d.clkCount.raw == 2) {
             // Unblock the PC
@@ -169,7 +171,7 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
         } else if (d.clkCount.raw == 5 && d.dblInstruction > 0) {
             d.writeFlag(FlagTypes.IndexLoad, 1)
             // Done
-            d.dblInstruction = 1
+            d.dblInstruction = 0
             d.currInstruction = -1
         } else if (d.clkCount.raw == 6 && d.dblInstruction <= 0) {
             // Block the PC increment
