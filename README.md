@@ -8,6 +8,10 @@ I started this project in Go, but I found the performance with the GUI/etc was a
 
 As you can see in this image, the CPU clock is running at about 1000kHz. The real CPU was rated at 750kHz, so we are a little faster at the moment :)
 **However**,  the intent of this project was not to make a fast emulator, but rather something that actually models the CPU and its peripherals. 
+
+I have also implemented a GUI to emulate a Logic Analyzer to help illustrate what is going on with the CPU, etc. You can select any 'public' signal or bus to visualize.
+![Visualizer Program with Logic Analyzer](https://dl.dropboxusercontent.com/s/hxsxfgmprx83vbo/J%204004%20LA.jpg?dl=0)
+
 ## Project update as of 01/13/2019
 
  - 4004 CPU
