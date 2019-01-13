@@ -94,7 +94,7 @@ class Decoder(clk: Observable<Int>) {
 
     fun calculateFlags() {
         // Continue to decode instructions after clock 5
-        if (clkCount.raw != 5 && currInstruction > 0) {
+        if (clkCount.raw != 5 && !decodeAgain && currInstruction > 0) {
             decodeCurrentInstruction(false)
         }
 

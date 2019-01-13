@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import kotlin.experimental.or
 
 var emitter: Emitter<Int>? = null
 
@@ -164,6 +165,24 @@ class CpuCoreTest {
             // Run the SRC command
             var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
             assertThat(res2.second).isEqualTo(expSrcVal)
+        }
+        @Test
+        fun FIM() {
+            core.reset()
+            var res = waitForSync(core)
+            assertThat(res.first).isEqualTo(true)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            var regPair = 2L
+            var romVal:Long = 0xDE
+
+            // The first cycle sets up the register pair to load into
+            runOneCycle(core, FIM.toLong().or(regPair.shl(1)))
+            // The second cycle provides the data to load
+            runOneCycle(core, romVal)
+
+            // Now check the registers
+            assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt())).isEqualTo(romVal.shr(4).and(0xf))
+            assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt()+1)).isEqualTo(romVal.and(0xf))
         }
     }
 }
