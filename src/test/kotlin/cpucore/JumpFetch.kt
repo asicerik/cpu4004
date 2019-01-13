@@ -34,7 +34,7 @@ class JumpFetchTests {
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            verifyJumpExtended(core, JMS.toLong(), true, true)
+            verifyJumpExtended(core, JUN.toLong(), true, true)
             var nextAddr = 0xabdL
             for (i in 0..3) {
                 var addr = runOneCycle(core, NOP.toLong())

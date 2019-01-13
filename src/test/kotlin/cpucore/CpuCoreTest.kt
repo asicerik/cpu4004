@@ -222,10 +222,10 @@ class CpuCoreTest {
             var romData: Long = 0x77
 
             // Populate scratch registers pair 0 with out expected address
-            loadRegisterPair(core, romAddr, 0)
+            loadRegisterPair(core, romAddr, regPair)
 
             // Run the command and verify the address on the next cycle
-            var addr = runOneCycle(core, FIN.toLong().or(regPair.shl(1)))
+            var addr = runOneCycle(core, JIN.toLong().or(regPair.shl(1)))
 
             addr = runOneCycle(core, romData)
             assertThat(addr).isEqualTo(romAddr)

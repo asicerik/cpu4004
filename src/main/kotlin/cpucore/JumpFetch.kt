@@ -119,7 +119,7 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
         if (d.clkCount.raw == 6) {
             d.setDecodedInstructionString(String.format("JIN %X", d.currInstruction.and(0xe)))
             // Output the lower address to the program counter
-            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+0) // Note - we are chopping bit 0
+            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+1) // Note - we are chopping bit 0
             d.writeFlag(FlagTypes.ScratchPadOut, 1)
             // Block the PC increment
             d.inhibitPCInc = true
@@ -128,7 +128,7 @@ fun handleFIN_JIN(d: Decoder, fullInst: Long) {
             d.writeFlag(FlagTypes.PCLoad, 1)
 
             // Output the lower address to the program counter
-            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+1) // Note - we are chopping bit 0
+            d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+0) // Note - we are chopping bit 0
             d.writeFlag(FlagTypes.ScratchPadOut, 1)
         } else if (d.clkCount.raw == 0) {
             // Load the middle 4 bits into the PC
