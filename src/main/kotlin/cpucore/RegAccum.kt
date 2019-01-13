@@ -61,3 +61,17 @@ fun handleINC(d: Decoder) {
     }
 }
 
+fun handleACC(d: Decoder) {
+    // We need to wait until clock 6 to know what to do here
+    if (d.clkCount.raw == 5 && d.dblInstruction == 0) {
+        d.decodeAgain = true
+        return
+    }
+    if (d.clkCount.raw == 6) {
+        d.writeFlag(FlagTypes.AccInst, d.currInstruction)
+        d.currInstruction = -1
+    }
+}
+
+
+

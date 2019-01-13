@@ -55,6 +55,12 @@ class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
         return reg.clocked.and(mask)
     }
 
+    // ReadDirectRaw directly reads the registers input
+    // This should be used very carefull
+    fun readDirectRaw(): Long {
+        return reg.raw.and(mask)
+    }
+
     // ReadDirect directly reads one nybble of the register instead of using the bus
     fun readNybbleDirect(nybble: Int): Long {
         return reg.clocked.shr(nybble * 4).and(0xf)

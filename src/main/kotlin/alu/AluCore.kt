@@ -7,6 +7,7 @@ import common.Register
 import cpucore.*
 import io.reactivex.Observable
 import utils.logger
+import kotlin.experimental.and
 
 class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     val log = logger()
@@ -137,7 +138,136 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         flags.writeDirect(flagsVal)
         return flagsVal
     }
+
+    fun exectuteAccInst(inst: Byte) {
+        var accumPre = accum.readDirect()
+        var carryPre = getFlags().carry
+        // All this stuff is NOT cycle accurate. Who knows how this works
+        // in the read CPU. Probably not this way though :)
+        when (inst) {
+            CLB -> {
+                accum.writeDirect(0)
+                alu.setCarryVal(0)
+            }
+            CLC -> {
+                alu.setCarryVal(0)
+            }
+            IAC -> {
+                alu.setAluMode(AluAdd)
+                alu.evaluate(accum.readDirect(), 1)
+                accum.writeDirect(alu.value)
+            }
+            CMC -> {
+                alu.complimentCarry()
+            }
+            CMA -> {
+                accum.writeDirect(accum.readDirect().inv().and(alu.mask))
+            }
+            RAL -> {
+                val flags  = getFlags()
+                var accumVal = accum.readDirect()
+                accumVal = accumVal.shl(1)
+                // The high bit becomes the carry bit
+                if (accumVal.and(alu.carryMask) != 0L) {
+                    alu.setCarryVal(1)
+                } else {
+                    alu.setCarryVal(0)
+                }
+                // The low bit is the previous carry
+                if (flags.carry != 0) {
+                    accumVal = accumVal.or(1)
+                }
+                accum.writeDirect(accumVal)
+            }
+            RAR -> {
+                val flags  = getFlags()
+                var accumVal = accum.readDirect()
+                val lsb = accumVal.and(0x1)
+                accumVal = accumVal.shr(1)
+                // Set the carry to the lsb before the shift
+                alu.setCarryVal(lsb)
+                // The high bit is the previous carry
+                if (flags.carry != 0) {
+                    accumVal = accumVal.or(0x8)
+                }
+                accum.writeDirect(accumVal)
+            }
+            TCC -> {
+                val flags  = getFlags()
+                if (flags.carry != 0) {
+                    accum.writeDirect(1)
+                } else {
+                    accum.writeDirect(0)
+                }
+                alu.setCarryVal(0)
+            }
+            TCS -> {
+                val flags  = getFlags()
+                if (flags.carry != 0) {
+                    accum.writeDirect(10)
+                } else {
+                    accum.writeDirect(9)
+                }
+                alu.setCarryVal(0)
+            }
+            DAC -> {
+                alu.setAluMode(AluSub)
+                // DAC mode does not appear to use the previous borrow state like a normal subtract does.
+                // So, clear it first
+                alu.setCarryVal(0)
+                alu.evaluate(accum.readDirect(), 1)
+                accum.writeDirect(alu.value)
+            }
+            STC -> {
+                alu.setCarryVal(1)
+            }
+            DAA -> {
+                val flags  = getFlags()
+                var accumVal = accum.readDirect()
+                if (accumVal > 9 || flags.carry != 0) {
+                    accumVal += 6
+                    // This command does not reset the carry, only sets it
+                    if (accumVal.and(alu.carryMask) != 0L) {
+                        alu.setCarryVal(1)
+                        accumVal = accumVal.and(alu.mask)
+                    }
+                    accum.writeDirect(accumVal)
+                }
+            }
+            KBP -> {
+                var accumVal = accum.readDirect()
+                if (accumVal < 3) {
+                    // Do nothing
+                } else if (accumVal == 4L) {
+                    accum.writeDirect(3)
+                } else if (accumVal == 8L) {
+                    accum.writeDirect(4)
+                } else {
+                    accum.writeDirect(0xf)
+                }
+            }
+            DCL -> {
+                // This command does not actually modify the accumulator
+                currentRamBank = accum.readDirect().and(0x7)
+            }
+        }
+        updateFlags()
+        val accumPost = accum.readDirectRaw()
+        val carryPost = alu.carry
+        val cmdString = accInstToString(inst.and(0xf))
+
+        if (log.isDebugEnabled)
+            log.debug(String.format("Accumulator CMD %s: accum pre=%X, carryPre=%X, accum post=%X, carryPost=%X",
+                cmdString, accumPre, carryPre, accumPost, carryPost))
+    }
 }
+
+var instStrings = listOf("CLB", "CLC", "IAC", "CMC", "CMA", "RAL", "RAR", "TCC", "DAC", "TCS", "STC", "DAA", "KBP", "DCL")
+
+fun accInstToString(inst: Byte): String {
+    return instStrings[inst.toInt()]
+}
+
 
 class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
     val log = logger()
@@ -157,16 +287,8 @@ class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
         mode = AluNone
     }
 
-//    fun readOutput() {
-//        outputReg.read()
-//    }
-//
-//    fun readOutputDirect(): Long {
-//        return outputReg.readDirect()
-//    }
-//
-    fun setCarry() {
-        carry = 1L
+    fun setCarryVal(value: Long) {
+        carry = value
         changed = true
     }
 

@@ -190,9 +190,9 @@ class Decoder(clk: Observable<Int>) {
                 handleADD(this, fullInst.toLong())
             SUB ->
                 handleSUB(this, fullInst.toLong())
-//            // Collectively, all the accumulator instructions
-//            ACC ->
-//                handleACC(fullInst, evalResult)
+            // Collectively, all the accumulator instructions
+            ACC ->
+                handleACC(this)
             WRR.and(0xF0.toByte()), RDR.and(0xF0.toByte()) ->
                 decodeAgain = true
         }

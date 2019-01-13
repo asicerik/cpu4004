@@ -230,6 +230,5 @@ class CpuCoreTest {
             addr = runOneCycle(core, romData)
             assertThat(addr).isEqualTo(romAddr)
         }
-
-}
+    }
 }

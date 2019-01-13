@@ -112,6 +112,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
         if (decoder.readFlag(FlagTypes.AccTempSwap) != 0) {
             aluCore.swap()
         }
+        if (decoder.readFlag(FlagTypes.AccInst) >= 0) {
+            aluCore.exectuteAccInst(decoder.readFlag(FlagTypes.AccInst).toByte())
+        }
         if (decoder.readFlag(FlagTypes.IndexLoad) != 0) {
             indexRegisters.write()
         }
