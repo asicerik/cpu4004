@@ -84,6 +84,7 @@ class Visualizer: JFrame() {
         cpuCore = cpucore.CpuCore(extDataBus, clk)
         rom0 = rom4001.Rom4001(extDataBus, led0Bus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
         led0Bus.init(4, "")
+        led0Bus.write(0xa)
 
         // Load the ROM(s)
         rom0!!.loadProgram(genLEDCountUsingAdd())
@@ -289,8 +290,8 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toLong())
             la.setChannel(pos++, "XBUS", 4, extDataBus.read())
 
-//            pos = addCpuGroup(pos)
-            pos = addRomGroup(pos)
+            pos = addCpuGroup(pos)
+//            pos = addRomGroup(pos)
 
             dim = la.runCycle()
             preferredSize = dim

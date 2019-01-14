@@ -139,10 +139,10 @@ class CpuCoreTest {
             // Write the other operand to the accumulator
             // Load the accumulator
             runOneCycle(core, LDM.toLong().or(valB))
-            // Run the add
+            // Run the subtract
             runOneCycle(core, SUB.toLong().or(0x5))
 
-            // Accumulator should now have the sum
+            // Accumulator should now have the difference
             val expVal = valB - valA
             assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
         }

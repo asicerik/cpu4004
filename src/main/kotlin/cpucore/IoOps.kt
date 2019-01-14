@@ -47,7 +47,8 @@ fun handleFIM_SRC(d: Decoder, fullInst: Long) {
     }
 }
 
-fun handleWMP(d: Decoder) {
+// WRR, WMP, WR0-3 all do the same thing as far as the processor is concerned
+fun handleWRM_WMP_WRR_WRn(d: Decoder) {
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)
@@ -57,13 +58,40 @@ fun handleWMP(d: Decoder) {
     }
 }
 
-fun handleWRR(d: Decoder) {
-    // Write the accumulator to the bus
-    if (d.clkCount.raw == 6) {
-        d.writeFlag(FlagTypes.AccOut, 1)
+// RDM, RDR, RD0-3 all do the same thing as far as the processor is concerned
+fun handleRDM_RDR_RDn(d: Decoder) {
+    // Write the value from the bus to the accumulator
+    if (d.clkCount.raw == 7) {
+        d.writeFlag(FlagTypes.AccLoad, 1)
 
-        d.x3IsRead = false
         d.currInstruction = -1
     }
 }
 
+fun handleSBM(d: Decoder) {
+    // Subtract the value from the RAM (on the bus) from the accumulator
+    if (d.clkCount.raw == 7) {
+        d.writeFlag(FlagTypes.TempLoad, 1)
+        d.writeFlag(FlagTypes.AluMode, AluIntModeSub)
+        // Evaluate the ALU and output to the bus
+        d.writeFlag(FlagTypes.AluEval, 1)
+        d.writeFlag(FlagTypes.AluOut, 1)
+    } else if (d.clkCount.raw == 0) {
+        d.writeFlag(FlagTypes.AccLoad, 1)
+        d.currInstruction = -1
+    }
+}
+
+fun handlADM(d: Decoder) {
+    // Add the value from the RAM (on the bus) to the accumulator
+    if (d.clkCount.raw == 7) {
+        d.writeFlag(FlagTypes.TempLoad, 1)
+        d.writeFlag(FlagTypes.AluMode, AluIntModeAdd)
+        // Evaluate the ALU and output to the bus
+        d.writeFlag(FlagTypes.AluEval, 1)
+        d.writeFlag(FlagTypes.AluOut, 1)
+    } else if (d.clkCount.raw == 0) {
+        d.writeFlag(FlagTypes.AccLoad, 1)
+        d.currInstruction = -1
+    }
+}

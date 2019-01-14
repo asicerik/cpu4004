@@ -61,8 +61,6 @@ class Decoder(clk: Observable<Int>) {
         for (flag in flags) {
             flag.value.reset()
         }
-        x2IsRead = false
-        x3IsRead = false
     }
 
     fun writeFlag(id: FlagTypes, value: Int) {
@@ -90,7 +88,7 @@ class Decoder(clk: Observable<Int>) {
         }
     }
 
-    fun calculateFlags(intBus: Bus) {
+    fun calculateFlags(intBus: Bus, inst: Long) {
         // Continue to decode instructions after clock 5
         if (clkCount.raw != 5 && !decodeAgain && currInstruction > 0) {
             decodeCurrentInstruction(false)
@@ -137,25 +135,33 @@ class Decoder(clk: Observable<Int>) {
                 writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
 //                writeFlag(FlagTypes.BusDir, BufDirIn)// Transfer to the external bus
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
+                // We need to peek into the instruction value to see if this is an IO read
+                // All I/O reads have bit 3 set
+                if (inst.and(0xf0).toByte() == IO && intBus.value.and(0x8) == 0x8L) {
+                    x2IsRead = true
+                }
             }
             6 -> {
                 if (decodeAgain) {
                     writeFlag(FlagTypes.DecodeInstruction, 1) // Decode the instruction register
                     decodeAgain = false
                 }
-                if (x2IsRead)
+                if (x2IsRead) {
+                    x2IsRead = false
                     writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
-                else {
+                } else {
                     writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
                 }
             }
             7 -> {
                 writeFlag(FlagTypes.Sync, 1)    // Generate the sync pulse
                 syncSent = true
-                if (x3IsRead)
+                if (x3IsRead) {
+                    x3IsRead = false
                     writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
-                else
+                } else {
                     writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
+                }
             }
         }
     }
@@ -201,16 +207,27 @@ class Decoder(clk: Observable<Int>) {
             // Collectively, all the accumulator instructions
             ACC ->
                 handleACC(this)
-            WRR.and(0xF0.toByte()), RDR.and(0xF0.toByte()) ->
-                decodeAgain = true
+            IO ->
+                if (clkCount.raw == 5) {
+                    decodeAgain = true
+                }
         }
 
-        // These instructions require decoding the entire 8 bits
-        when (fullInst) {
-            WMP ->
-                handleWMP(this)
-            WRR ->
-                handleWRR(this)
+        if (!decodeAgain) {
+            // These instructions require decoding the entire 8 bits
+            when (fullInst) {
+                WRM, WMP, WRR, WR0, WR1, WR2, WR3 ->
+                    handleWRM_WMP_WRR_WRn(this)
+                RDM, RDR, RD0, RD1, RD2, RD3-> {
+                    handleRDM_RDR_RDn(this)
+                }
+                SBM -> {
+                    handleSBM(this)
+                }
+                ADM -> {
+                    handlADM(this)
+                }
+            }
         }
     }
 

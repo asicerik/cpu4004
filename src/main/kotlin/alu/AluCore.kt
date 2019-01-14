@@ -292,7 +292,7 @@ fun accInstToString(inst: Byte): String {
 class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
     val log = logger()
     val carryMask: Long
-    var mode = ""
+    var mode = AluNone
     var carry = 0L
     var changed = false
     var value = 0L
@@ -305,6 +305,8 @@ class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
     fun reset() {
         value = 0L
         mode = AluNone
+        carry = 0
+        changed = true
     }
 
     fun setCarryVal(value: Long) {

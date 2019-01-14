@@ -82,6 +82,50 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
     return Pair(addr, ioVal)
 }
 
+fun runOneIOReadCycle(core: CpuCore, inst: Long, data: Long): Long {
+    var addr = 0L
+    for (i in 0..7) {
+        emitter!!.onNext(0)
+
+        if (i < 3) {
+            addr = addr.or(core.extDataBus.read().shl(i * 4))
+        }
+        // Check for the presence/lack of CM_ROM/RAM
+        var expCmRam = 0xE  // CMRAM0 (active low)
+        if (core.aluCore.currentRamBank > 0) {
+            expCmRam = core.aluCore.currentRamBank.inv().and(0xf).toInt()
+        }
+        if (i == 2) {
+            // Cycle 2 is the ROM instruction read, so CMROM should always be asserted
+            assertThat(core.cmRom.clocked).isEqualTo(0)
+            assertThat(core.cmRam.clocked).isEqualTo(0xf)
+        } else if (i == 4 && (inst.and(0xf0).toByte() == IO)) {
+            // Cycle 4 on IO ops should have the signals asserted
+            assertThat(core.cmRom.clocked).isEqualTo(0)
+            assertThat(core.cmRam.clocked).isEqualTo(expCmRam)
+        } else if (i == 6) {
+            if (inst.and(0xf0).toByte() == SRC) {
+                assertThat(core.cmRom.clocked).isEqualTo(0)
+                assertThat(core.cmRam.clocked).isEqualTo(expCmRam)
+            }
+        } else {
+            assertThat(core.cmRom.clocked).isEqualTo(1)
+            assertThat(core.cmRam.clocked).isEqualTo(0xf)
+        }
+        emitter!!.onNext(1)
+        if (i == 2) {
+            core.extDataBus.write(inst.shr(4).and(0xf))
+        } else if (i == 3) {
+            core.extDataBus.write(inst.and(0xf))
+        } else if (i == 5) {
+            // IO read data to the CPU
+            core.extDataBus.write(data.and(0xf))
+        }
+    }
+    return addr
+}
+
+
 fun loadRegisterPair(core: CpuCore, data: Long, regPair: Long) : Long {
     // Load the accumulator with the lower 4 bits
     var nextAddr = runOneCycle(core, LDM.toLong().or(data.and(0xf)))
