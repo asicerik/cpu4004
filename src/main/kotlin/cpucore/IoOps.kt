@@ -51,8 +51,6 @@ fun handleWMP(d: Decoder) {
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)
-        // Assert the CMRAM line
-        d.writeFlag(FlagTypes.CmRam, 1)
 
         d.x3IsRead = false
         d.currInstruction = -1
@@ -63,8 +61,6 @@ fun handleWRR(d: Decoder) {
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)
-        // Assert the CMROM line
-        d.writeFlag(FlagTypes.CmRom, 1)
 
         d.x3IsRead = false
         d.currInstruction = -1

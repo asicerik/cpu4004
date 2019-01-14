@@ -54,7 +54,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     private fun process() {
         resetFlags()
         decoder.clkAndSync()
-        decoder.calculateFlags()
+        decoder.calculateFlags(intDataBus)
         //update()
         if (decoder.readFlag(FlagTypes.DecodeInstruction) != 0) {
             var evalResult = true

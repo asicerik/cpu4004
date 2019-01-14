@@ -1,9 +1,6 @@
 package cpucore
 
-import common.BufDirIn
-import common.BufDirNone
-import common.BufDirOut
-import common.Clocked
+import common.*
 import io.reactivex.Observable
 import utils.logger
 import kotlin.experimental.and
@@ -93,7 +90,7 @@ class Decoder(clk: Observable<Int>) {
         }
     }
 
-    fun calculateFlags() {
+    fun calculateFlags(intBus: Bus) {
         // Continue to decode instructions after clock 5
         if (clkCount.raw != 5 && !decodeAgain && currInstruction > 0) {
             decodeCurrentInstruction(false)
@@ -120,10 +117,20 @@ class Decoder(clk: Observable<Int>) {
             }
             3 -> {
                 writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
+                // We need to check for IO ops here. We have not run the decode yet.
+                // but we need to assert the CM* lines
+                if (intBus.value == IO.toLong().shr(4)) {
+                    writeFlag(FlagTypes.CmRom, 1)
+                    writeFlag(FlagTypes.CmRam, 1)
+                }
             }
             4 -> {
                 writeFlag(FlagTypes.InstRegLoad, 2) // load the upper nybble of the inst register
                 writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
+                if (intBus.value == IO.toLong().shr(4).and(0xf)) {
+                    writeFlag(FlagTypes.CmRom, 1)
+                    writeFlag(FlagTypes.CmRam, 1)
+                }
             }
             5 -> {
                 writeFlag(FlagTypes.InstRegLoad, 1) // load the lower nybble of the inst register

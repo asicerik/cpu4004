@@ -51,21 +51,22 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
             ioVal = ioVal.or(core.extDataBus.read())
         }
         // Check for the presence/lack of CM_ROM/RAM
+        var expCmRam = 0xE  // CMRAM0 (active low)
+        if (core.aluCore.currentRamBank > 0) {
+            expCmRam = core.aluCore.currentRamBank.inv().and(0xf).toInt()
+        }
         if (i == 2) {
             // Cycle 2 is the ROM instruction read, so CMROM should always be asserted
             assertThat(core.cmRom.clocked).isEqualTo(0)
             assertThat(core.cmRam.clocked).isEqualTo(0xf)
+        } else if (i == 4 && (data.and(0xf0).toByte() == IO)) {
+            // Cycle 4 on IO ops should have the signals asserted
+            assertThat(core.cmRom.clocked).isEqualTo(0)
+            assertThat(core.cmRam.clocked).isEqualTo(expCmRam)
         } else if (i == 6) {
             if (data.and(0xf0).toByte() == SRC) {
                 assertThat(core.cmRom.clocked).isEqualTo(0)
-                assertThat(core.cmRam.clocked).isEqualTo(core.aluCore.currentRamBank.inv().and(0xf))
-            } else {
-                when (data.toByte()) {
-                    WRR -> {
-                        assertThat(core.cmRom.clocked).isEqualTo(0)
-                        assertThat(core.cmRam.clocked).isEqualTo(0xf)
-                    }
-                }
+                assertThat(core.cmRam.clocked).isEqualTo(expCmRam)
             }
         } else {
             assertThat(core.cmRom.clocked).isEqualTo(1)

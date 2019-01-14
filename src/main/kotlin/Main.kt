@@ -334,6 +334,10 @@ class Visualizer: JFrame() {
             if (rom0!!.decoder.chipSelected)
                 cs = 1
 
+            la.setChannel(pos++, "CPUBUS", 4, cpuCore!!.intDataBus.read())
+            la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toLong())
+            la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toLong())
+            la.setChannel(pos++, "INST", 8, cpuCore!!.instReg.getInstructionRegister())
             la.setChannel(pos++, "ROMBUS", 4, rom0!!.decoder.intBus.value)
             la.setChannel(pos++, "LED0BUS", 4, led0Bus.value)
             la.setChannel(pos++, "RALOAD", 2, rom0!!.decoder.addrLoad.toLong())

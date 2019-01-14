@@ -248,12 +248,27 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
             }
             DCL -> {
                 // This command does not actually modify the accumulator
-                // DCL is not described well in the docs for how this becomes the CMRAM pins.
                 // The pins can directly select 1 of 4 rams, or can be used through a 3/8 decoder
-                // to select 1 of 8 rams. We DO know that the default value selects ram bank 0.
-                // So, taking the 0-based select and making it 1-based will have bit 0 set by
-                // default
-                currentRamBank = accum.readDirect().and(0x7) + 1
+                // to select 1 of 8 rams.
+                // The 4040 instruction manual actually describes how this works:
+                /*
+                (ACC)   |CM-RAMi Enabled            |Bank No.
+                --------+---------------------------+--------
+                X 0 0 0 |CM-RAM0                    |Bank 0
+                X 0 0 1 |CM-RAM1                    |Bank 1
+                X 0 1 0 |CM-RAM2                    |Bank 2
+                X 1 0 0 |CM-RAM3                    |Bank 3
+                X 0 1 1 |CM-RAM1,CM-RAM2            |Bank 4
+                X 1 0 1 |CM-RAM1,CM-RAM3            |Bank 5
+                X 1 1 0 |CM-RAM2,CM-RAM3            |Bank 6
+                X 1 1 1 |CM-RAM1,CM-RAM2,CM-RAM3    |Bank 7
+                */
+                var accumVal = accum.readDirect()
+                if (accumVal == 0L) {
+                    currentRamBank = 1
+                } else {
+                    currentRamBank = accumVal.shl(1)
+                }
             }
         }
         updateFlags()

@@ -393,14 +393,14 @@ class AccTests {
             assertThat(core.aluCore.getFlags().zero).isEqualTo(1)
 
             // DCL - set the RAM selection register
-            // First make sure it is zero
-            assertThat(core.aluCore.currentRamBank).isEqualTo(0L)
+            // First make sure it is 1
+            assertThat(core.aluCore.currentRamBank).isEqualTo(1L)
             // Set the ram bank
             val ramBank = 7L
             runOneCycle(core, LDM.toLong().or(ramBank))
             runOneCycle(core, DCL.toLong())
             // Now make sure it has updated
-            assertThat(core.aluCore.currentRamBank).isEqualTo(ramBank)
+            assertThat(core.aluCore.currentRamBank).isEqualTo(ramBank.shl(1))
         }
     }
 }
