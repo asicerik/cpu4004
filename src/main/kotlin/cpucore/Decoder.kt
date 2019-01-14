@@ -138,8 +138,9 @@ class Decoder(clk: Observable<Int>) {
                 }
                 if (x2IsRead)
                     writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
-                else
+                else {
                     writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
+                }
             }
             7 -> {
                 writeFlag(FlagTypes.Sync, 1)    // Generate the sync pulse
@@ -199,6 +200,8 @@ class Decoder(clk: Observable<Int>) {
 
         // These instructions require decoding the entire 8 bits
         when (fullInst) {
+            WMP ->
+                handleWMP(this)
             WRR ->
                 handleWRR(this)
         }

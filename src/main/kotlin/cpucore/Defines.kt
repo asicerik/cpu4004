@@ -19,6 +19,7 @@ const val LD  = 0xA0.toByte() // Load register into accumulator
 const val XCH = 0xB0.toByte() // Exchange the accumulator and scratchpad register
 const val BBL = 0xC0.toByte() // Branch back (stack pop)
 const val LDM = 0xD0.toByte() // Load direct into accumulator
+const val WMP = 0xE1.toByte() // RAM Output write
 const val WRR = 0xE2.toByte() // ROM I/O write
 const val RDR = 0xEA.toByte() // ROM I/O read
 const val ACC = 0xF0.toByte() // Alias for all the accumulator instructions

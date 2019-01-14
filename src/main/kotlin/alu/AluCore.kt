@@ -20,7 +20,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     val tempBus = Bus()
     val flagsBus = Bus()
     val mode = ""
-    var currentRamBank = 0L
+    var currentRamBank = 1L
         private set
     var accumDrivingBus = false
     var tempDrivingBus  = false
@@ -43,7 +43,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         flags.reset()
         alu.reset()
         updateFlags()
-        currentRamBank = 0L
+        currentRamBank = 1L
     }
 
     fun swap() {
@@ -248,7 +248,12 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
             }
             DCL -> {
                 // This command does not actually modify the accumulator
-                currentRamBank = accum.readDirect().and(0x7)
+                // DCL is not described well in the docs for how this becomes the CMRAM pins.
+                // The pins can directly select 1 of 4 rams, or can be used through a 3/8 decoder
+                // to select 1 of 8 rams. We DO know that the default value selects ram bank 0.
+                // So, taking the 0-based select and making it 1-based will have bit 0 set by
+                // default
+                currentRamBank = accum.readDirect().and(0x7) + 1
             }
         }
         updateFlags()

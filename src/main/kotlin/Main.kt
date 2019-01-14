@@ -289,7 +289,8 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toLong())
             la.setChannel(pos++, "XBUS", 4, extDataBus.read())
 
-            pos = addCpuGroup(pos)
+//            pos = addCpuGroup(pos)
+            pos = addRomGroup(pos)
 
             dim = la.runCycle()
             preferredSize = dim
@@ -338,6 +339,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "RALOAD", 2, rom0!!.decoder.addrLoad.toLong())
             la.setChannel(pos++, "ROMADDR", 4, rom0!!.decoder.addrReg.readDirect())
             la.setChannel(pos++, "CMROM", 1, cpuCore!!.cmRom.clocked.toLong())
+            la.setChannel(pos++, "CMRAM", 4, cpuCore!!.cmRam.clocked.toLong())
             la.setChannel(pos++, "ROMDIR", 2, rom0!!.decoder.bufDir.toLong())
             la.setChannel(pos++, "ROMOUT", 2, rom0!!.decoder.romDataOut.toLong())
             la.setChannel(pos++, "ROMCS", 1, cs.toLong())

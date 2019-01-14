@@ -50,12 +50,31 @@ fun runOneIOCycle(core: CpuCore, data: Long): Pair<Long, Long> {
         if (i == 7) {
             ioVal = ioVal.or(core.extDataBus.read())
         }
+        // Check for the presence/lack of CM_ROM/RAM
+        if (i == 2) {
+            // Cycle 2 is the ROM instruction read, so CMROM should always be asserted
+            assertThat(core.cmRom.clocked).isEqualTo(0)
+            assertThat(core.cmRam.clocked).isEqualTo(0xf)
+        } else if (i == 6) {
+            if (data.and(0xf0).toByte() == SRC) {
+                assertThat(core.cmRom.clocked).isEqualTo(0)
+                assertThat(core.cmRam.clocked).isEqualTo(core.aluCore.currentRamBank.inv().and(0xf))
+            } else {
+                when (data.toByte()) {
+                    WRR -> {
+                        assertThat(core.cmRom.clocked).isEqualTo(0)
+                        assertThat(core.cmRam.clocked).isEqualTo(0xf)
+                    }
+                }
+            }
+        } else {
+            assertThat(core.cmRom.clocked).isEqualTo(1)
+            assertThat(core.cmRam.clocked).isEqualTo(0xf)
+        }
         emitter!!.onNext(1)
         if (i == 2) {
-//                rlog.Debugf("runOneCycle: Writing upper data %X", (data>>4)&0xf)
             core.extDataBus.write(data.shr(4).and(0xf))
         } else if (i == 3) {
-//                rlog.Debugf("runOneCycle: Writing lower data %X", data&0xf)
             core.extDataBus.write(data.and(0xf))
         }
     }

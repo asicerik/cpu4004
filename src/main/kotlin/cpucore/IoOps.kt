@@ -17,7 +17,6 @@ fun handleFIM_SRC(d: Decoder, fullInst: Long) {
             }
         } else {
             if (d.clkCount.raw == 4) {
-                d.setDecodedInstructionString("FIM")
                 // Write the index register
                 d.writeFlag(FlagTypes.IndexLoad, 1)
                 // Select the second index register
@@ -36,6 +35,9 @@ fun handleFIM_SRC(d: Decoder, fullInst: Long) {
             // Output the current scratchpad register
             d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe))  // Note - we are chopping bit 0
             d.writeFlag(FlagTypes.ScratchPadOut, 1)
+            // Assert the CMROM/RAM lines for an upcoming i/o operation
+            d.writeFlag(FlagTypes.CmRom, 1)
+            d.writeFlag(FlagTypes.CmRam, 1)
         } else if (d.clkCount.raw == 7) {
             // Output the current scratchpad register
             d.writeFlag(FlagTypes.IndexSelect, d.currInstruction.and(0xe)+1)  // Note - we are chopping bit 0
@@ -45,11 +47,25 @@ fun handleFIM_SRC(d: Decoder, fullInst: Long) {
     }
 }
 
+fun handleWMP(d: Decoder) {
+    // Write the accumulator to the bus
+    if (d.clkCount.raw == 6) {
+        d.writeFlag(FlagTypes.AccOut, 1)
+        // Assert the CMRAM line
+        d.writeFlag(FlagTypes.CmRam, 1)
+
+        d.x3IsRead = false
+        d.currInstruction = -1
+    }
+}
 
 fun handleWRR(d: Decoder) {
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)
+        // Assert the CMROM line
+        d.writeFlag(FlagTypes.CmRom, 1)
+
         d.x3IsRead = false
         d.currInstruction = -1
     }

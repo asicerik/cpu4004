@@ -13,9 +13,9 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
     val log = logger()
     // These are public so they can be shared and monitored
     // The contract is that you don't change them :)
-    val sync = Clocked(1, clk)      // Sync signal between devices
-    val cmRom = Clocked(0, clk)     // ROM select signal from CPU
-    val cmRam = Clocked(0, clk)     // RAM select signals (4 bits) from CPU
+    val sync = Clocked(1, clk)        // Sync signal between devices
+    val cmRom = Clocked(1, clk)       // ROM select signal from CPU
+    val cmRam = Clocked(0xf, clk)     // RAM select signals (4 bits) from CPU
 
     val decoder = Decoder(clk)
     val intDataBus = Bus()
@@ -126,7 +126,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             cmRom.raw = 0
         }
         if (decoder.readFlag(FlagTypes.CmRam) > 0) {
-            cmRam.raw = decoder.readFlag(FlagTypes.CmRam).inv().and(0xf)
+            cmRam.raw = aluCore.currentRamBank.inv().and(0xf).toInt()
         }
     }
 
