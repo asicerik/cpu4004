@@ -15,9 +15,7 @@ fun genLEDCount(): List<Byte> {
     addInstruction(data, JUN)  // Jump back to ROM 0
     addInstruction(data, 0x00) // Jump to address 0
     // Fill the rest of the space up till 256
-    for (i in data.size until 256) {
-        data.add(0)
-    }
+    fillEmptyProgramData(data)
     return data
 }
 
@@ -37,10 +35,14 @@ fun genLEDCountUsingAdd(): List<Byte> {
     addInstruction(data, JUN)                   // Jump back to ROM 0
     addInstruction(data, loopStart.toByte())    // Jump to start of loop
     // Fill the rest of the space up till 256
+    fillEmptyProgramData(data)
+    return data
+}
+
+fun fillEmptyProgramData(data: MutableList<Byte>) {
     for (i in data.size until 256) {
         data.add(0)
     }
-    return data
 }
 
 fun addInstruction(data: MutableList<Byte>, inst:Byte) {

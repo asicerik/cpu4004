@@ -27,7 +27,6 @@ import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
-
 fun main(args: Array<String>) {
     val visualizer = Visualizer()
     visualizer.run()
@@ -213,7 +212,7 @@ class Visualizer: JFrame() {
 
         fun initRenderers() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
-            romRenderer.initRenderer(rom0!!.decoder, romBounds)
+            romRenderer.initRenderer(rom0!!, romBounds)
             val ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
             val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
             led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
@@ -332,21 +331,21 @@ class Visualizer: JFrame() {
         fun addRomGroup(posIn: Int): Int {
             var pos = posIn
             var cs = 0
-            if (rom0!!.decoder.chipSelected)
+            if (rom0!!.chipSelected)
                 cs = 1
 
             la.setChannel(pos++, "CPUBUS", 4, cpuCore!!.intDataBus.read())
             la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toLong())
             la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toLong())
             la.setChannel(pos++, "INST", 8, cpuCore!!.instReg.getInstructionRegister())
-            la.setChannel(pos++, "ROMBUS", 4, rom0!!.decoder.intBus.value)
+            la.setChannel(pos++, "ROMBUS", 4, rom0!!.intBus.value)
             la.setChannel(pos++, "LED0BUS", 4, led0Bus.value)
-            la.setChannel(pos++, "RALOAD", 2, rom0!!.decoder.addrLoad.toLong())
-            la.setChannel(pos++, "ROMADDR", 4, rom0!!.decoder.addrReg.readDirect())
+            la.setChannel(pos++, "RALOAD", 2, rom0!!.addrLoad.toLong())
+            la.setChannel(pos++, "ROMADDR", 4, rom0!!.addrReg.readDirect())
             la.setChannel(pos++, "CMROM", 1, cpuCore!!.cmRom.clocked.toLong())
             la.setChannel(pos++, "CMRAM", 4, cpuCore!!.cmRam.clocked.toLong())
-            la.setChannel(pos++, "ROMDIR", 2, rom0!!.decoder.bufDir.toLong())
-            la.setChannel(pos++, "ROMOUT", 2, rom0!!.decoder.romDataOut.toLong())
+            la.setChannel(pos++, "ROMDIR", 2, rom0!!.bufDir.toLong())
+            la.setChannel(pos++, "ROMOUT", 2, rom0!!.romDataOut.toLong())
             la.setChannel(pos++, "ROMCS", 1, cs.toLong())
             return pos
         }

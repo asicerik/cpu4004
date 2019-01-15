@@ -5,7 +5,7 @@ import cpucore.WRR
 import io.reactivex.Observable
 import utils.logger
 
-class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
+open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
     val log = logger()
 
     val clkCount = Clocked(0, clk)
@@ -40,6 +40,19 @@ class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val s
             valueRegs.add(Register(0, clk))
             valueRegs[i].init(null, 8, "     ") // The spaces line up the values in the center
         }
+    }
+
+    fun reset() {
+        syncSeen    = false
+        bufDir      = BufDirNone
+        addrLoad    = 0
+        romDataOut  = 0
+        chipSelected= false
+        srcDetected = false
+        srcRomID    = 0L
+        ioOpDetected= false
+        drivingBus  = false
+        data.clear()
     }
 
     fun setID(id: Long) {
@@ -179,11 +192,15 @@ class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val s
         }
 
         if (romDataOut == 1) {
-            val outData = data[addrReg.readDirect().toInt()].toLong().shr(4).and(0xf)
-            intBus.write(outData)
+            if (addrReg.readDirect().toInt() < data.size) {
+                val outData = data[addrReg.readDirect().toInt()].toLong().shr(4).and(0xf)
+                intBus.write(outData)
+            }
         } else if (romDataOut == 2) {
-            val outData = data[addrReg.readDirect().toInt()].toLong().and((0xf))
-            intBus.write(outData)
+            if (addrReg.readDirect().toInt() < data.size) {
+                val outData = data[addrReg.readDirect().toInt()].toLong().and((0xf))
+                intBus.write(outData)
+            }
         }
     }
 
@@ -218,6 +235,9 @@ class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val s
                 first = curr - 1
                 valueRegs[1].selected = chipSelected
             }
+        }
+        if ((first+2) >= data.size) {
+            return
         }
 
         valueRegs[0].writeDirect(data[first].toLong())
