@@ -32,7 +32,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     var ioRead = false          // If true, output our IO bus data to the data bus
     var chipSelected = false
     var srcDetected  = false    // SRC command was detected
-    var srcRomID     = 0L       // The ROM ID sent in the SRC command
+    var srcDeviceID     = 0L    // The ROM/RAM ID sent in the SRC command
+    var srcRegisterSel  = 0L    // The RAM register select sent in the SRC command
+    var srcCharacterSel = 0L    // The RAM character select sent in the SRC command
     var ioOpDetected = false    // IO Operation was detected
 
     init {
@@ -53,7 +55,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         ioRead      = false
         chipSelected= false
         srcDetected = false
-        srcRomID    = 0L
+        srcDeviceID    = 0L
         ioOpDetected= false
         drivingBus  = false
         data.clear()
@@ -68,6 +70,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     }
 
     fun loadProgram(data: List<Byte>) {
+        if (!romMode) {
+            throw RuntimeException("Cannot load programs in RAM mode")
+        }
         this.data.clear()
         this.data.addAll(0, data)
         calculateValueRegisters()
@@ -169,8 +174,10 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                     val cmd = instReg.readDirect()
                     when (cmd) {
                         RDR.toLong().and(0xff) -> {
-                            bufDir = BufDirOut  // Transfer to the external bus
-                            ioRead = true
+                            if (romMode) {
+                                bufDir = BufDirOut  // Transfer to the external bus
+                                ioRead = true
+                            }
                         }
                     }
                 }
@@ -178,13 +185,35 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
             6 -> {
                 if (srcDetected) {
                     bufDir = BufDirIn   // Transfer to the internal bus
-                    srcRomID = intBus.read().and(0xf)
-                    if (srcRomID != id) {
-                        log.debug(String.format("ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
-                            id, srcRomID))
-                        srcDetected = false
+                    if (romMode) {
+                        srcDeviceID = intBus.read().and(0xf)
+                        if (srcDeviceID != id) {
+                            log.debug(
+                                String.format(
+                                    "ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
+                                    id, srcDeviceID
+                                )
+                            )
+                            srcDetected = false
+                        } else {
+                            log.debug(String.format("ROM/RAM: SRC command WAS for us. Our chipID=%02X", id))
+                        }
                     } else {
-                        log.debug(String.format("ROM/RAM: SRC command WAS for us. Our chipID=%02X", id))
+                        // RAM mode
+                        // The upper two bits are the chip ID (4 RAMs/CM RAM line)
+                        srcDeviceID = intBus.read().and(0xC).shr(2)
+                        srcRegisterSel = intBus.read().and(0x3)
+                        if (srcDeviceID != id) {
+                            log.debug(
+                                String.format(
+                                    "ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
+                                    id, srcDeviceID
+                                )
+                            )
+                            srcDetected = false
+                        } else {
+                            log.debug(String.format("ROM/RAM: SRC command WAS for us. Our chipID=%02X", id))
+                        }
                     }
                 }
                 // IO ops that get data from the external data bus go here
@@ -201,6 +230,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 }
             }
             7 -> {
+                if (!romMode) {
+                    srcCharacterSel = intBus.read().and(0xf)
+                }
                 bufDir = BufDirIn   // Transfer to the internal bus
             }
         }

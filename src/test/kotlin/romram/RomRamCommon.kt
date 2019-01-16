@@ -15,17 +15,16 @@ fun step(count: Int) {
     }
 }
 
-fun runOneCycle(dev: RomRamDecoder, addr: Long): Byte {
-    val res = runOneIOReadCycle(dev, addr)
+fun runOneCycle(dev: RomRamDecoder, addr: Long, instIn: Long?=null): Byte {
+    val res = runOneIOReadCycle(dev, addr, instIn)
     return res.first
 }
 
-fun runOneIOReadCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
+fun runOneIOReadCycle(dev: RomRamDecoder, addr: Long, instIn: Long?=null): Pair<Byte, Byte> {
     var inst:Byte = 0
     var ioData:Byte = 0
     var log = LoggerFactory.getLogger("ROM Tests")
     for (i in 0..7) {
-        //val i = (j-1).and(0x7)
         // Read the instruction/ROM data
         if (i == 4) {
             inst = dev.extBus.read().shl(4).toByte()
@@ -51,15 +50,24 @@ fun runOneIOReadCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
                 dev.cm.raw = 0
             }
         }
+        // Write out the instruction one nybble at a time if supplied
+        if (instIn != null) {
+            if (i == 3) {
+                dev.extBus.write(instIn.shr(4).and(0xf))
+            } else if (i == 4) {
+                dev.extBus.write(instIn.and(0xf))
+            }
+        }
         emitter!!.onNext(1)
         // Setup the device inputs
         logIoState(dev, 1, i, log)
-
     }
+    // Copy over the supplied instruction since we are not going to get one from the device?
+    inst = instIn?.toByte() ?: inst
     return Pair(inst, ioData)
 }
 
-fun runOneSRCCycle(dev: RomRamDecoder, addr: Long, srcData: Long) {
+fun runOneSRCCycle(dev: RomRamDecoder, addr: Long, srcData: Long, instIn: Long?=null) {
     var log = LoggerFactory.getLogger("ROM Tests")
     for (i in 0..7) {
         // Sample the device outputs
@@ -83,13 +91,21 @@ fun runOneSRCCycle(dev: RomRamDecoder, addr: Long, srcData: Long) {
                 dev.cm.raw = 0
             }
         }
+        // Write out the instruction one nybble at a time if supplied
+        if (instIn != null) {
+            if (i == 3) {
+                dev.extBus.write(instIn.shr(4).and(0xf))
+            } else if (i == 4) {
+                dev.extBus.write(instIn.and(0xf))
+            }
+        }
         emitter!!.onNext(1)
         // Setup the device inputs
         logIoState(dev, 1, i, log)
     }
 }
 
-fun runOneIoWriteCycle(dev: RomRamDecoder, addr: Long, ioData: Long) {
+fun runOneIoWriteCycle(dev: RomRamDecoder, addr: Long, ioData: Long, instIn: Long?=null) {
     var log = LoggerFactory.getLogger("ROM Tests")
     for (i in 0..7) {
         // Sample the device outputs
@@ -111,6 +127,14 @@ fun runOneIoWriteCycle(dev: RomRamDecoder, addr: Long, ioData: Long) {
             dev.extBus.write(addr.shr((i)*4).and(0xf))
             if (i == 2) {
                 dev.cm.raw = 0
+            }
+        }
+        // Write out the instruction one nybble at a time if supplied
+        if (instIn != null) {
+            if (i == 3) {
+                dev.extBus.write(instIn.shr(4).and(0xf))
+            } else if (i == 4) {
+                dev.extBus.write(instIn.and(0xf))
             }
         }
         emitter!!.onNext(1)
