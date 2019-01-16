@@ -13,7 +13,8 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     val valueRegs = mutableListOf<Register>()
     val intBus = Bus()
     val buffer = Buffer(intBus, extBus, "I/O Buf ")
-    val data = mutableListOf<Byte>()
+    var data = mutableListOf<Byte>()
+    var registers = mutableListOf<Byte>()   // For RAM only
 
     // Renderer stuff
     var drivingBus = false
@@ -73,6 +74,14 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         this.data.clear()
         this.data.addAll(0, data)
         calculateValueRegisters()
+    }
+
+    fun createRamMemory(characters: Int, registers: Int) {
+        if (romMode) {
+            throw RuntimeException("Cannot create memory in ROM mode")
+        }
+        this.data       = MutableList(characters) { 0.toByte() }
+        this.registers  = MutableList(registers) { 0.toByte() }
     }
 
     fun resetFlags() {

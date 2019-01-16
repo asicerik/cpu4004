@@ -39,6 +39,7 @@ class RamTests {
         cmRom = Clocked(1, clk)       // ROM select signal from CPU
         cmRam = Clocked(0xf, clk)     // RAM select signals (4 bits) from CPU
         ram = Ram4002(dataBus, ioBus, clk, sync, cmRom)
+        ram.createRamMemory(16,4)
     }
 
     @Nested
@@ -90,12 +91,13 @@ class RamTests {
         }
         @Test
         fun IoRead() {
+            // You should not be able to read a RAM's IO bus
             ram.reset()
-            var data = mutableListOf<Byte>()
             // Sync the device
             runOneCycle(ram, 0)
             runOneCycle(ram, 0)
             val ioData:Long = 0xB
+
             // Write the ioData to the ioBus
             ioBus.write(ioData)
 
@@ -105,6 +107,51 @@ class RamTests {
             val res = romram.runOneIOReadCycle(ram, 0, RDR.toLong())
             assertThat(res.second).isNotEqualTo(ioData.toByte())
         }
+        @Test
+        fun SrcDecodes() {
+            ram.reset()
+            // Sync the device
+            runOneCycle(ram, 0)
+            runOneCycle(ram, 0)
 
+            var chipId = 0L
+            var registerSel = 0L
+            var characterSel = 0L
+
+            // Verify the defaults work
+            runOneSRCCycle(ram, 0, chipId.shl(2).or(registerSel).shl(4).or(characterSel), SRC.toLong())
+            assertThat(ram.srcDetected).isTrue()
+            assertThat(ram.srcDeviceID).isEqualTo(chipId)
+            assertThat(ram.srcRegisterSel).isEqualTo(registerSel)
+            assertThat(ram.srcCharacterSel).isEqualTo(characterSel)
+
+            // The chip should not respond to chipId 1
+            chipId = 1L
+            runOneSRCCycle(ram, 0, chipId.shl(2).or(registerSel).shl(4).or(characterSel), SRC.toLong())
+            assertThat(ram.srcDetected).isFalse()
+            assertThat(ram.srcDeviceID).isEqualTo(chipId)
+            assertThat(ram.srcRegisterSel).isEqualTo(registerSel)
+            assertThat(ram.srcCharacterSel).isEqualTo(characterSel)
+
+            // Check the register select decode
+            chipId = 0L
+            registerSel = 1L
+            runOneSRCCycle(ram, 0, chipId.shl(2).or(registerSel).shl(4).or(characterSel), SRC.toLong())
+            assertThat(ram.srcDetected).isTrue()
+            assertThat(ram.srcDeviceID).isEqualTo(chipId)
+            assertThat(ram.srcRegisterSel).isEqualTo(registerSel)
+            assertThat(ram.srcCharacterSel).isEqualTo(characterSel)
+
+            // And finally, the character select decode
+            characterSel = 0x7
+            runOneSRCCycle(ram, 0, chipId.shl(2).or(registerSel).shl(4).or(characterSel), SRC.toLong())
+            assertThat(ram.srcDetected).isTrue()
+            assertThat(ram.srcDeviceID).isEqualTo(chipId)
+            assertThat(ram.srcRegisterSel).isEqualTo(registerSel)
+            // We need one more clock to get the srcCharacterSel, but we don't want to mess up the sync timing, so run
+            // a whole cycle
+            runOneCycle(ram, 0)
+            assertThat(ram.srcCharacterSel).isEqualTo(characterSel)
+        }
     }
 }
