@@ -1,5 +1,7 @@
 package common
 
+import cpucore.IO
+import cpucore.RDR
 import cpucore.SRC
 import cpucore.WRR
 import io.reactivex.Observable
@@ -27,6 +29,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     var bufDir = BufDirNone     // Which direction (if any) to transfer between internal and external bus
     var addrLoad = 0            // Load the address register. The value is the nybble (1 based)
     var romDataOut = 0          // Output the ROM data. The value is the nybble (1 based)
+    var ioRead = false          // If true, output our IO bus data to the data bus
     var chipSelected = false
     var srcDetected  = false    // SRC command was detected
     var srcRomID     = 0L       // The ROM ID sent in the SRC command
@@ -47,6 +50,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         bufDir      = BufDirNone
         addrLoad    = 0
         romDataOut  = 0
+        ioRead      = false
         chipSelected= false
         srcDetected = false
         srcRomID    = 0L
@@ -123,9 +127,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                     bufDir = BufDirOut  // Transfer to the external bus
                 }
                 // Check for IO ops before we update the SRC flag
-                if (extBus.value == WRR.toLong().shr(4).and(0xf)) {
+                if (extBus.value == IO.toLong().shr(4).and(0xf)) {
                     if (srcDetected) {
-                        log.debug("ROM: IO instruction detected")
+                        log.debug("ROM/RAM: IO instruction detected")
                         ioOpDetected = true
                     } else {
                         ioOpDetected = false
@@ -137,7 +141,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 // NOTE: FIM and SRC have the same upper 4 bits
                 // We won't know which instruction it is until the next cycle
                 if (extBus.value == SRC.toLong().shr(4).and(0xf)) {
-                    log.debug("ROM: FIM/SRC instruction detected")
+                    log.debug("ROM/RAM: FIM/SRC instruction detected")
                     srcDetected = true
                 } else {
                     srcDetected = false
@@ -148,28 +152,47 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
             4 -> {
                 bufDir = BufDirIn   // Transfer to the internal bus
                 instReg.writeNybbleDirect(0, extBus.value)
+                // NOTE: FIM and SRC have the same upper 4 bits
+                if (extBus.value.and(1) == 1L) {
+                    log.debug("ROM/RAM: SRC instruction detected")
+                    srcDetected = true
+                } else {
+                    log.debug("ROM/RAM: FIM instruction detected")
+                    srcDetected = false
+                }
+
             }
             5 -> {
                 bufDir = BufDirIn   // Transfer to the internal bus
+                // IO ops that write data to the external data bus go here
+                if (ioOpDetected) {
+                    val cmd = instReg.readDirect()
+                    when (cmd) {
+                        RDR.toLong().and(0xff) -> {
+                            bufDir = BufDirOut  // Transfer to the external bus
+                            ioRead = true
+                        }
+                    }
+                }
             }
             6 -> {
                 if (srcDetected) {
                     bufDir = BufDirIn   // Transfer to the internal bus
                     srcRomID = intBus.read().and(0xf)
                     if (srcRomID != id) {
-                        log.debug(String.format("ROM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
+                        log.debug(String.format("ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
                             id, srcRomID))
                         srcDetected = false
                     } else {
-                        log.debug(String.format("ROM: SRC command WAS for us. Our chipID=%02X", id))
+                        log.debug(String.format("ROM/RAM: SRC command WAS for us. Our chipID=%02X", id))
                     }
                 }
+                // IO ops that get data from the external data bus go here
                 if (ioOpDetected) {
-                    // Copy the data to the internal bus
-                    bufDir = BufDirIn   // Transfer to the internal bus
                     val cmd = instReg.readDirect()
                     when (cmd) {
                         WRR.toLong().and(0xff) -> {
+                            bufDir = BufDirIn   // Transfer to the internal bus
                             // IO Write
                             ioBus.reset()
                             ioBus.write(intBus.read())
@@ -201,6 +224,10 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 val outData = data[addrReg.readDirect().toInt()].toLong().and((0xf))
                 intBus.write(outData)
             }
+        }
+        if (ioRead) {
+            val outData = ioBus.value
+            intBus.write(outData)
         }
     }
 

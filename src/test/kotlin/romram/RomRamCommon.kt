@@ -16,11 +16,11 @@ fun step(count: Int) {
 }
 
 fun runOneCycle(dev: RomRamDecoder, addr: Long): Byte {
-    val res = runOneIOCycle(dev, addr)
+    val res = runOneIOReadCycle(dev, addr)
     return res.first
 }
 
-fun runOneIOCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
+fun runOneIOReadCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
     var inst:Byte = 0
     var ioData:Byte = 0
     var log = LoggerFactory.getLogger("ROM Tests")
@@ -41,6 +41,7 @@ fun runOneIOCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
         dev.cm.raw = 1
 
         if (i == 7) {
+            ioData = dev.extBus.value.and(0xf).toByte()
             dev.sync.raw = 0
         }
         // Write out the address one nybble at a time
@@ -58,10 +59,71 @@ fun runOneIOCycle(dev: RomRamDecoder, addr: Long): Pair<Byte, Byte> {
     return Pair(inst, ioData)
 }
 
+fun runOneSRCCycle(dev: RomRamDecoder, addr: Long, srcData: Long) {
+    var log = LoggerFactory.getLogger("ROM Tests")
+    for (i in 0..7) {
+        // Sample the device outputs
+        emitter!!.onNext(0)
+
+        // Defaults
+        dev.sync.raw = 1
+        dev.cm.raw = 1
+
+        if (i ==6) {
+            dev.extBus.write(srcData.shr(4).and(0xf))
+            dev.cm.raw = 0
+        } else if (i == 7) {
+            dev.extBus.write(srcData.and(0xf))
+            dev.sync.raw = 0
+        }
+        // Write out the address one nybble at a time
+        if (i in 0..2) {
+            dev.extBus.write(addr.shr((i)*4).and(0xf))
+            if (i == 2) {
+                dev.cm.raw = 0
+            }
+        }
+        emitter!!.onNext(1)
+        // Setup the device inputs
+        logIoState(dev, 1, i, log)
+    }
+}
+
+fun runOneIoWriteCycle(dev: RomRamDecoder, addr: Long, ioData: Long) {
+    var log = LoggerFactory.getLogger("ROM Tests")
+    for (i in 0..7) {
+        // Sample the device outputs
+        emitter!!.onNext(0)
+
+        // Defaults
+        dev.sync.raw = 1
+        dev.cm.raw = 1
+
+        if (i ==4) {
+            dev.cm.raw = 0
+        } else if (i ==6) {
+            dev.extBus.write(ioData.and(0xf))
+        } else if (i == 7) {
+            dev.sync.raw = 0
+        }
+        // Write out the address one nybble at a time
+        if (i in 0..2) {
+            dev.extBus.write(addr.shr((i)*4).and(0xf))
+            if (i == 2) {
+                dev.cm.raw = 0
+            }
+        }
+        emitter!!.onNext(1)
+        // Setup the device inputs
+        logIoState(dev, 1, i, log)
+    }
+}
+
+
 fun logIoState(dev: RomRamDecoder, clock: Int, clockCnt: Int, log: Logger) {
     if (log.isInfoEnabled)
-        log.info(String.format("DBUS=%X, SYNC=%d, CM=%d, CLK=%d, CCLK=%d, RCLK=%d",
-            dev.extBus.value, dev.sync.clocked, dev.cm.clocked, clock, clockCnt, dev.clkCount.clocked))
+        log.info(String.format("DBUS=%X, IOBUS=%X, SYNC=%d, CM=%d, CLK=%d, CCLK=%d, RCLK=%d",
+            dev.extBus.value, dev.ioBus.value, dev.sync.clocked, dev.cm.clocked, clock, clockCnt, dev.clkCount.clocked))
 }
 
 
