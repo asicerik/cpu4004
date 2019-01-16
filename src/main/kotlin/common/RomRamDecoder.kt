@@ -1,9 +1,6 @@
 package common
 
-import cpucore.IO
-import cpucore.RDR
-import cpucore.SRC
-import cpucore.WRR
+import cpucore.*
 import io.reactivex.Observable
 import utils.logger
 
@@ -220,11 +217,21 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 if (ioOpDetected) {
                     val cmd = instReg.readDirect()
                     when (cmd) {
+                        WMP.toLong().and(0xff) -> {
+                            if (!romMode) {
+                                bufDir = BufDirIn   // Transfer to the internal bus
+                                // IO Write
+                                ioBus.reset()
+                                ioBus.write(intBus.read())
+                            }
+                        }
                         WRR.toLong().and(0xff) -> {
-                            bufDir = BufDirIn   // Transfer to the internal bus
-                            // IO Write
-                            ioBus.reset()
-                            ioBus.write(intBus.read())
+                            if (romMode) {
+                                bufDir = BufDirIn   // Transfer to the internal bus
+                                // IO Write
+                                ioBus.reset()
+                                ioBus.write(intBus.read())
+                            }
                         }
                     }
                 }

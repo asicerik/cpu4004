@@ -85,7 +85,7 @@ class RamTests {
             // Run the SRC command first to arm the device
             runOneSRCCycle(ram, 0, 0L, SRC.toLong())
             assertThat(ram.srcDetected).isTrue()
-            runOneIoWriteCycle(ram, 1, ioData, WRR.toLong())
+            runOneIoWriteCycle(ram, 1, ioData, WMP.toLong())
             assertThat(ioBus.value).isEqualTo(ioData)
         }
         @Test
