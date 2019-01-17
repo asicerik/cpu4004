@@ -14,7 +14,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     val intBus = Bus()
     val buffer = Buffer(intBus, extBus, "I/O Buf ")
     var data = mutableListOf<Byte>()
-    var registers = mutableListOf<Byte>()   // For RAM only
+    var statusMem = mutableListOf<Byte>()   // For RAM only
+    var registers = 0L                      // How many registers (banks) of memory in RAM
+    var characters = 0L                     // How many characters per bank
 
     // Renderer stuff
     var drivingBus = false
@@ -80,12 +82,14 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         calculateValueRegisters()
     }
 
-    fun createRamMemory(characters: Int, registers: Int) {
+    fun createRamMemory(characters: Int, statusCharacters: Int, registers: Int) {
         if (romMode) {
             throw RuntimeException("Cannot create memory in ROM mode")
         }
-        this.data       = MutableList(characters) { 0.toByte() }
-        this.registers  = MutableList(registers) { 0.toByte() }
+        this.data       = MutableList(characters * registers) { 0.toByte() }
+        this.statusMem  = MutableList(statusCharacters * registers) { 0.toByte() }
+        this.registers  = registers.toLong()
+        this.characters = characters.toLong()
     }
 
     fun resetFlags() {
@@ -240,8 +244,8 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                             if (!romMode) {
                                 bufDir = BufDirIn   // Transfer to the internal bus
                                 // Write to the requested memory character
-                                if (srcCharacterSel >=0 && srcCharacterSel < data.size) {
-                                    data[srcCharacterSel.toInt()] = intBus.read().toByte()
+                                if ((srcCharacterSel+(srcRegisterSel*characters)) >= 0 && (srcCharacterSel+(srcRegisterSel*characters)) < data.size) {
+                                    data[(srcCharacterSel+(srcRegisterSel*characters)).toInt()] = intBus.read().toByte()
                                 }
                             }
                         }
@@ -298,8 +302,8 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
             intBus.write(outData)
         }
         if (memRead) {
-            if (srcCharacterSel >= 0 && srcCharacterSel < data.size) {
-                val outData = data[srcCharacterSel.toInt()].toLong()
+            if ((srcCharacterSel+(srcRegisterSel*characters)) >= 0 && (srcCharacterSel+(srcRegisterSel*characters)) < data.size) {
+                val outData = data[(srcCharacterSel+(srcRegisterSel*characters)).toInt()].toLong()
                 intBus.write(outData)
             }
         }

@@ -39,7 +39,7 @@ class RamTests {
         cmRom = Clocked(1, clk)       // ROM select signal from CPU
         cmRam = Clocked(0xf, clk)     // RAM select signals (4 bits) from CPU
         ram = Ram4002(dataBus, ioBus, clk, sync, cmRom)
-        ram.createRamMemory(16,4)
+        ram.createRamMemory(16,4, 4)
     }
 
     @Nested
@@ -157,23 +157,39 @@ class RamTests {
             // Sync the device
             runOneCycle(ram, 0)
             runOneCycle(ram, 0)
-            var data = mutableListOf<Long>()
-            for (i in 0L..15L) {
-                data.add(i)
-            }
 
+            var register = 0L
             // Write each character into the RAM
             for (i in 0L..15L) {
                 // Run the SRC command first to arm the device
                 // The data is the character select
-                runOneSRCCycle(ram, 0, i, SRC.toLong())
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
                 assertThat(ram.srcDetected).isTrue()
                 runOneIoWriteCycle(ram, 0, i, WRM.toLong())
                 assertThat(ram.srcCharacterSel).isEqualTo(i)
             }
-            // Finally, go directly read the RAM data
+            // Go directly read the RAM data in register 0
             for (i in 0L..15L) {
-                assertThat(ram.data[i.toInt()].toLong()).isEqualTo(data[i.toInt()])
+                assertThat(ram.data[(i+register*4).toInt()].toLong()).isEqualTo(i)
+            }
+            // Now write a decrementing pattern to another register to make sure they don't clobber each other
+            register = 1L
+            // Write each character into the RAM
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, 15-i, WRM.toLong())
+                assertThat(ram.srcCharacterSel).isEqualTo(i)
+            }
+            // Go directly read the RAM data in register 0
+            for (i in 0L..15L) {
+                assertThat(ram.data[(i).toInt()].toLong()).isEqualTo(i)
+            }
+            // Go directly read the RAM data in register 1
+            for (i in 0L..15L) {
+                assertThat(ram.data[(i+register*16).toInt()].toLong()).isEqualTo(15-i)
             }
         }
         @Test
@@ -187,24 +203,57 @@ class RamTests {
                 data.add(i)
             }
 
+            var register = 0L
             // Write each character into the RAM
             for (i in 0L..15L) {
                 // Run the SRC command first to arm the device
                 // The data is the character select
-                runOneSRCCycle(ram, 0, i, SRC.toLong())
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
                 assertThat(ram.srcDetected).isTrue()
                 runOneIoWriteCycle(ram, 0, i, WRM.toLong())
                 assertThat(ram.srcCharacterSel).isEqualTo(i)
             }
-            // Finally, read the data back using the RDM command
+            // Read the data back using the RDM command
             for (i in 0L..15L) {
                 // Run the SRC command first to arm the device
                 // The data is the character select
-                runOneSRCCycle(ram, 0, i, SRC.toLong())
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
                 assertThat(ram.srcDetected).isTrue()
                 val res = runOneIOReadCycle(ram, 0, RDM.toLong())
                 assertThat(res.second.toLong()).isEqualTo(data[i.toInt()])
             }
+            // Now write a decrementing pattern to another register to make sure they don't clobber each other
+            register = 1L
+            // Write each character into the RAM
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, 15-i, WRM.toLong())
+                assertThat(ram.srcCharacterSel).isEqualTo(i)
+            }
+            // Read the data back from register 0 using the RDM command
+            register = 0L
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res = runOneIOReadCycle(ram, 0, RDM.toLong())
+                assertThat(res.second.toLong()).isEqualTo(data[i.toInt()])
+            }
+            // Read the data back from register 1 using the RDM command
+            register = 1L
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res = runOneIOReadCycle(ram, 0, RDM.toLong())
+                assertThat(res.second.toLong()).isEqualTo(data[(15-i).toInt()])
+            }
+
         }
 
     }
