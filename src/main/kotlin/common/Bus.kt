@@ -35,5 +35,6 @@ class Bus: Maskable() {
 
     fun reset() {
         writes = 0
+//        value = 0xffffffff.and(mask)
     }
 }

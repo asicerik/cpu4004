@@ -32,15 +32,18 @@ fun runOneIOReadCycle(dev: RomRamDecoder, addr: Long, instIn: Long?=null): Pair<
         if (i == 5) {
             inst = inst.or(dev.extBus.read().toByte())
         }
+        if (i == 7) {
+            ioData = dev.extBus.value.and(0xf).toByte()
+        }
         // Sample the device outputs
         emitter!!.onNext(0)
+        dev.extBus.reset()
 
         // Defaults
         dev.sync.raw = 1
         dev.cm.raw = 1
 
         if (i == 7) {
-            ioData = dev.extBus.value.and(0xf).toByte()
             dev.sync.raw = 0
         }
         // Write out the address one nybble at a time

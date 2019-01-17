@@ -28,6 +28,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     var addrLoad = 0            // Load the address register. The value is the nybble (1 based)
     var romDataOut = 0          // Output the ROM data. The value is the nybble (1 based)
     var ioRead = false          // If true, output our IO bus data to the data bus
+    var memRead = false         // If true, output the selected RAM character
     var chipSelected = false
     var srcDetected  = false    // SRC command was detected
     var srcDeviceID     = 0L    // The ROM/RAM ID sent in the SRC command
@@ -51,12 +52,15 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         addrLoad    = 0
         romDataOut  = 0
         ioRead      = false
+        memRead     = false
         chipSelected= false
         srcDetected = false
         srcDeviceID    = 0L
         ioOpDetected= false
         drivingBus  = false
-        data.clear()
+        for (i in 0 until data.size) {
+            data[i] = 0
+        }
     }
 
     fun setID(id: Long) {
@@ -185,6 +189,12 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                                 ioRead = true
                             }
                         }
+                        RDM.toLong().and(0xff) -> {
+                            if (!romMode) {
+                                bufDir = BufDirOut  // Transfer to the external bus
+                                memRead = true
+                            }
+                        }
                     }
                 }
             }
@@ -226,6 +236,16 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 if (ioOpDetected) {
                     val cmd = instReg.readDirect()
                     when (cmd) {
+                        WRM.toLong().and(0xff) -> {
+                            if (!romMode) {
+                                bufDir = BufDirIn   // Transfer to the internal bus
+                                // Write to the requested memory character
+                                if (srcCharacterSel >=0 && srcCharacterSel < data.size) {
+                                    data[srcCharacterSel.toInt()] = intBus.read().toByte()
+                                }
+                            }
+                        }
+
                         WMP.toLong().and(0xff) -> {
                             if (!romMode) {
                                 bufDir = BufDirIn   // Transfer to the internal bus
@@ -276,6 +296,12 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         if (ioRead) {
             val outData = ioBus.value
             intBus.write(outData)
+        }
+        if (memRead) {
+            if (srcCharacterSel >= 0 && srcCharacterSel < data.size) {
+                val outData = data[srcCharacterSel.toInt()].toLong()
+                intBus.write(outData)
+            }
         }
     }
 
