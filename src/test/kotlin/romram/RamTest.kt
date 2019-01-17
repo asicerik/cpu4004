@@ -255,6 +255,141 @@ class RamTests {
             }
 
         }
+        @Test
+        fun StatusWrite() {
+            ram.reset()
+            // Sync the device
+            runOneCycle(ram, 0)
+            runOneCycle(ram, 0)
 
+            var register = 0L
+            // Write each status character into the RAM
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, i, WR0.plus(i))
+            }
+            // Go directly read the RAM data in register 0
+            for (i in 0L..3L) {
+                assertThat(ram.statusMem[(i+register*4).toInt()].toLong()).isEqualTo(i)
+            }
+            // Now write a decrementing pattern to another register to make sure they don't clobber each other
+            register = 1L
+            // Write each status character into the RAM
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, 15-i, WR0.plus(i))
+            }
+            // Go directly read the RAM data in register 0
+            for (i in 0L..3L) {
+                assertThat(ram.statusMem[(i).toInt()].toLong()).isEqualTo(i)
+            }
+            // Go directly read the RAM data in register 1
+            for (i in 0L..3L) {
+                assertThat(ram.statusMem[(i+register*4).toInt()].toLong()).isEqualTo(15-i)
+            }
+        }
+        @Test
+        fun StatusRead() {
+            ram.reset()
+            // Sync the device
+            runOneCycle(ram, 0)
+            runOneCycle(ram, 0)
+
+            var register = 0L
+            // Write each status character into the RAM
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, i, WR0.plus(i))
+            }
+            // Read back each status character from the RAM
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res =runOneIOReadCycle(ram, 0, RD0.plus(i))
+                assertThat(res.second.toLong()).isEqualTo(i)
+            }
+            // Now write a decrementing pattern to another register to make sure they don't clobber each other
+            register = 1L
+            // Write each status character into the RAM
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, 15-i, WR0.plus(i))
+            }
+            // Read back each status character from the RAM register 0
+            register = 0L
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res =runOneIOReadCycle(ram, 0, RD0.plus(i))
+                assertThat(res.second.toLong()).isEqualTo(i)
+            }
+            // Read back each status character from the RAM register 1
+            register = 1L
+            for (i in 0L..3L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res =runOneIOReadCycle(ram, 0, RD0.plus(i))
+                assertThat(res.second.toLong()).isEqualTo(15-i)
+            }
+        }
+        @Test
+        fun SBM_ADM() {
+            // From the RAM's perspective, SBM and ABM are equivalent to RDM
+            ram.reset()
+            // Sync the device
+            runOneCycle(ram, 0)
+            runOneCycle(ram, 0)
+            var data = mutableListOf<Long>()
+            for (i in 0L..15L) {
+                data.add(i)
+            }
+
+            var register = 0L
+            // Write each character into the RAM
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                runOneIoWriteCycle(ram, 0, i, WRM.toLong())
+                assertThat(ram.srcCharacterSel).isEqualTo(i)
+            }
+            // Read the data back using the SBM command
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res = runOneIOReadCycle(ram, 0, SBM.toLong())
+                assertThat(res.second.toLong()).isEqualTo(data[i.toInt()])
+            }
+            // Read the data back using the ADM command
+            for (i in 0L..15L) {
+                // Run the SRC command first to arm the device
+                // The data is the character select
+                runOneSRCCycle(ram, 0, register.shl(4).or(i), SRC.toLong())
+                assertThat(ram.srcDetected).isTrue()
+                val res = runOneIOReadCycle(ram, 0, ADM.toLong())
+                assertThat(res.second.toLong()).isEqualTo(data[i.toInt()])
+            }
+        }
     }
 }

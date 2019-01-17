@@ -3,6 +3,7 @@ package common
 import cpucore.*
 import io.reactivex.Observable
 import utils.logger
+import kotlin.experimental.and
 
 open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
     val log = logger()
@@ -16,7 +17,8 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     var data = mutableListOf<Byte>()
     var statusMem = mutableListOf<Byte>()   // For RAM only
     var registers = 0L                      // How many registers (banks) of memory in RAM
-    var characters = 0L                     // How many characters per bank
+    var characters = 0L                     // How many characters per bank (register)
+    var statusCharacters = 0L               // How many status characters per bank (register)
 
     // Renderer stuff
     var drivingBus = false
@@ -31,6 +33,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
     var romDataOut = 0          // Output the ROM data. The value is the nybble (1 based)
     var ioRead = false          // If true, output our IO bus data to the data bus
     var memRead = false         // If true, output the selected RAM character
+    var statusRead = -1L        // If >=0, output the selected RAM status character
     var chipSelected = false
     var srcDetected  = false    // SRC command was detected
     var srcDeviceID     = 0L    // The ROM/RAM ID sent in the SRC command
@@ -55,6 +58,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         romDataOut  = 0
         ioRead      = false
         memRead     = false
+        statusRead  = -1L
         chipSelected= false
         srcDetected = false
         srcDeviceID    = 0L
@@ -90,6 +94,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         this.statusMem  = MutableList(statusCharacters * registers) { 0.toByte() }
         this.registers  = registers.toLong()
         this.characters = characters.toLong()
+        this.statusCharacters = statusCharacters.toLong()
     }
 
     fun resetFlags() {
@@ -174,7 +179,6 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 // NOTE: FIM and SRC have the same upper 4 bits
                 if (extBus.value.and(1) == 1L) {
                     log.debug("ROM/RAM: SRC instruction detected")
-                    srcDetected = true
                 } else {
                     log.debug("ROM/RAM: FIM instruction detected")
                     srcDetected = false
@@ -193,10 +197,16 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                                 ioRead = true
                             }
                         }
-                        RDM.toLong().and(0xff) -> {
+                        RDM.toLong().and(0xff),SBM.toLong().and(0xff),ADM.toLong().and(0xff) -> {
                             if (!romMode) {
                                 bufDir = BufDirOut  // Transfer to the external bus
                                 memRead = true
+                            }
+                        }
+                        RD0.toLong().and(0xff),RD1.toLong().and(0xff),RD2.toLong().and(0xff),RD3.toLong().and(0xff) -> {
+                            if (!romMode) {
+                                bufDir = BufDirOut  // Transfer to the external bus
+                                statusRead = cmd - RD0.toInt().and(0xff)
                             }
                         }
                     }
@@ -246,6 +256,16 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                                 // Write to the requested memory character
                                 if ((srcCharacterSel+(srcRegisterSel*characters)) >= 0 && (srcCharacterSel+(srcRegisterSel*characters)) < data.size) {
                                     data[(srcCharacterSel+(srcRegisterSel*characters)).toInt()] = intBus.read().toByte()
+                                }
+                            }
+                        }
+                        WR0.toLong().and(0xff),WR1.toLong().and(0xff),WR2.toLong().and(0xff),WR3.toLong().and(0xff) -> {
+                            if (!romMode) {
+                                bufDir = BufDirIn   // Transfer to the internal bus
+                                // Write to the requested status character
+                                val index = cmd - WR0.toLong().and(0xff)
+                                if ((index+(srcRegisterSel*statusCharacters)) >= 0 && (index+(srcRegisterSel*statusCharacters)) < statusMem.size) {
+                                    statusMem[(index+(srcRegisterSel*statusCharacters)).toInt()] = intBus.read().toByte()
                                 }
                             }
                         }
@@ -304,6 +324,12 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
         if (memRead) {
             if ((srcCharacterSel+(srcRegisterSel*characters)) >= 0 && (srcCharacterSel+(srcRegisterSel*characters)) < data.size) {
                 val outData = data[(srcCharacterSel+(srcRegisterSel*characters)).toInt()].toLong()
+                intBus.write(outData)
+            }
+        }
+        if (statusRead >= 0) {
+            if ((statusRead+(srcRegisterSel*statusCharacters)) >= 0 && (statusRead+(srcRegisterSel*statusCharacters)) < statusMem.size) {
+                val outData = statusMem[(statusRead+(srcRegisterSel*statusCharacters)).toInt()].toLong()
                 intBus.write(outData)
             }
         }
