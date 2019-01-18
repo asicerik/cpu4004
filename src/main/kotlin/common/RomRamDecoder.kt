@@ -5,7 +5,7 @@ import io.reactivex.Observable
 import utils.logger
 import kotlin.experimental.and
 
-open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
+open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>, val sync: Clocked<Int>, val cm: Clocked<Int>) {
     val log = logger()
 
     val clkCount = Clocked(0, clk)
@@ -256,6 +256,8 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                                 // Write to the requested memory character
                                 if ((srcCharacterSel+(srcRegisterSel*characters)) >= 0 && (srcCharacterSel+(srcRegisterSel*characters)) < data.size) {
                                     data[(srcCharacterSel+(srcRegisterSel*characters)).toInt()] = intBus.read().toByte()
+                                    addrReg.writeDirect((srcCharacterSel+(srcRegisterSel*characters)))
+                                    calculateValueRegisters()
                                 }
                             }
                         }
@@ -274,16 +276,16 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                             if (!romMode) {
                                 bufDir = BufDirIn   // Transfer to the internal bus
                                 // IO Write
-                                ioBus.reset()
-                                ioBus.write(intBus.read())
+                                ioBus?.reset()
+                                ioBus?.write(intBus.read())
                             }
                         }
                         WRR.toLong().and(0xff) -> {
                             if (romMode) {
                                 bufDir = BufDirIn   // Transfer to the internal bus
                                 // IO Write
-                                ioBus.reset()
-                                ioBus.write(intBus.read())
+                                ioBus?.reset()
+                                ioBus?.write(intBus.read())
                             }
                         }
                     }
@@ -300,10 +302,12 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
 
     fun update() {
         // Address register and chip select
-        if (addrLoad == 1) {
-            addrReg.writeNybble(0)
-        } else if (addrLoad == 2) {
-            addrReg.writeNybble(1)
+        if (romMode) {
+            if (addrLoad == 1) {
+                addrReg.writeNybble(0)
+            } else if (addrLoad == 2) {
+                addrReg.writeNybble(1)
+            }
         }
 
         if (romDataOut == 1) {
@@ -317,7 +321,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus, clk: Observable<Int>, 
                 intBus.write(outData)
             }
         }
-        if (ioRead) {
+        if (ioRead && ioBus != null) {
             val outData = ioBus.value
             intBus.write(outData)
         }

@@ -48,6 +48,9 @@ class RomRamRenderer {
         busRenderer.render(g, core!!.drivingBus)
         core!!.drivingBus = false
         g.color = TextNormal
-        g.drawString(String.format("ROM %d", core!!.getID()), bounds.x, bounds.y + bounds.height - MainFontSize)
+        if (core!!.romMode)
+            g.drawString(String.format("ROM %d", core!!.getID()), bounds.x, bounds.y + bounds.height - MainFontSize)
+        else
+            g.drawString(String.format("RAM %d", core!!.getID()), bounds.x, bounds.y + bounds.height - MainFontSize)
     }
 }

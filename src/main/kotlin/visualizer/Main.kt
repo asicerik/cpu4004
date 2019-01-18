@@ -1,13 +1,15 @@
+package visualizer
+
 import common.*
 import cpucore.CpuCore
 import cpucore.FlagTypes
-import instruction.genLEDCount
 import instruction.genLEDCountUsingAdd
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
 import logicanalyzer.LogicAnalyzer
 import org.slf4j.Logger
+import ram4002.Ram4002
 import rendering.BusRenderer
 import rendering.CpuCoreRenderer
 import rendering.IoBusRenderer
@@ -16,16 +18,12 @@ import rom4001.Rom4001
 import utils.logger
 import java.awt.*
 import java.awt.Font.*
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
-import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
 fun main(args: Array<String>) {
     val visualizer = Visualizer()
@@ -45,8 +43,10 @@ class Visualizer: JFrame() {
     val log = logger()
     var extDataBus = Bus()
     var led0Bus = Bus()
+    var led1Bus = Bus()
     var cpuCore: CpuCore? = null
     var rom0: Rom4001? = null
+    var ram0: Ram4002? = null
     var emitter: Emitter<Int>? = null
     var runFlags = RunFlags()
     var laShown = false
@@ -82,8 +82,12 @@ class Visualizer: JFrame() {
         extDataBus.init(4, "Ext Data Bus")
         cpuCore = cpucore.CpuCore(extDataBus, clk)
         rom0 = rom4001.Rom4001(extDataBus, led0Bus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
+        ram0 = ram4002.Ram4002(extDataBus, led1Bus, clk, cpuCore!!.sync, cpuCore!!.cmRam)
+        ram0!!.createRamMemory(16, 4, 4)
         led0Bus.init(4, "")
+        led1Bus.init(4, "")
         led0Bus.write(0xa)
+        led1Bus.write(0xc)
 
         // Load the ROM(s)
         rom0!!.loadProgram(genLEDCountUsingAdd())
@@ -208,14 +212,22 @@ class Visualizer: JFrame() {
         var cpuRenderer = CpuCoreRenderer()
         var extBusRenderer = BusRenderer()
         var romRenderer = RomRamRenderer()
+        var ramRenderer = RomRamRenderer()
         var led0Renderer = IoBusRenderer()
+        var led1Renderer = IoBusRenderer()
 
         fun initRenderers() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
             romRenderer.initRenderer(rom0!!, romBounds)
-            val ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
-            val ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
+            var ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
+            var ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
             led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
+            val ramBounds = Rectangle(leftRenderingBounds.width - romBounds.width - 150 - Margin,Margin, 0, 0)
+            ramRenderer.initRenderer(ram0!!, ramBounds)
+            ledStart = Point(ramBounds.x + ramBounds.width + 20, ramBounds.y)
+            ledEnd = Point(ramBounds.x + ramBounds.width + 20, ramBounds.y + 100)
+            led1Renderer.initRenderer(led1Bus, ledStart, ledEnd, 4, "IO ")
+
             val extBusWidth = 30
             val extBusBounds = Rectangle(0,romBounds.y + romBounds.height + extBusWidth/2, leftRenderingBounds.width, 0)
             extBusRenderer.initRenderer(extDataBus, Point(extBusBounds.x, extBusBounds.y), Point(leftRenderingBounds.width, extBusBounds.y), 30)
@@ -239,7 +251,9 @@ class Visualizer: JFrame() {
                 val font = Font(MainFont, BOLD, MainFontSize)
                 g.font = font
                 romRenderer.render(g)
+                ramRenderer.render(g)
                 led0Renderer.render(g)
+                led1Renderer.render(g)
                 extBusRenderer.render(g, false)
                 cpuRenderer.render(g)
                 g.color = TextNormal

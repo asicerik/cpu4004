@@ -7,7 +7,7 @@ import cpucore.Decoder
 import io.reactivex.Observable
 import utils.logger
 
-class Ram4002(extDataBus: Bus, ioBus: Bus, clk: Observable<Int>, sync: Clocked<Int>, cm: Clocked<Int>):
+class Ram4002(extDataBus: Bus, ioBus: Bus?, clk: Observable<Int>, sync: Clocked<Int>, cm: Clocked<Int>):
     RomRamDecoder(extDataBus, ioBus, clk, sync, cm) {
     // These are public so they can be shared and monitored
     // The contract is that you don't change them :)

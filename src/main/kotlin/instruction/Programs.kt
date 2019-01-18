@@ -29,8 +29,12 @@ fun genLEDCountUsingAdd(): List<Byte> {
 
     val loopStart = data.size
     addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM
-    addInstruction(data, WRR)                   // Write accumulator to ROM
+    addInstruction(data, WRR)                  // Write accumulator to ROM
     addInstruction(data, ADD.or(4))       // Add contents of register 4 to accumulator
+    addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM
+    addInstruction(data, WMP)                   // Write accumulator to ROM
+    addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM
+    addInstruction(data, WRM)                   // Write accumulator to RAM memory
 
     addInstruction(data, JUN)                   // Jump back to ROM 0
     addInstruction(data, loopStart.toByte())    // Jump to start of loop
