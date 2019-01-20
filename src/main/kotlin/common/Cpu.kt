@@ -37,6 +37,8 @@ class Cpu() {
         cpuCore = cpucore.CpuCore(extDataBus, clk)
         rom = Rom4001(extDataBus, ioBus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
         ram = Ram4002(extDataBus, outputBus, clk, cpuCore!!.sync, cpuCore!!.cmRam)
+        rom!!.omniMode = true
+        ram!!.omniMode = true
         ioBus.init(64, String.format("ROM I/O Bus"))
         outputBus.init(64, String.format("RAM Output Bus"))
         return true

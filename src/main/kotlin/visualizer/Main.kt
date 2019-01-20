@@ -4,6 +4,7 @@ import common.*
 import cpucore.CpuCore
 import cpucore.FlagTypes
 import instruction.genLEDCountUsingAdd
+import instruction.genTestAND
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
@@ -83,14 +84,14 @@ class Visualizer: JFrame() {
         cpuCore = cpucore.CpuCore(extDataBus, clk)
         rom0 = rom4001.Rom4001(extDataBus, led0Bus, clk, cpuCore!!.sync, cpuCore!!.cmRom)
         ram0 = ram4002.Ram4002(extDataBus, led1Bus, clk, cpuCore!!.sync, cpuCore!!.cmRam)
+        rom0!!.omniMode = true
+        ram0!!.omniMode = true
         ram0!!.createRamMemory(16, 4, 4)
-        led0Bus.init(4, "")
-        led1Bus.init(4, "")
-        led0Bus.write(0xa)
-        led1Bus.write(0xc)
+        led0Bus.init(64, "")
+        led1Bus.init(64, "")
 
         // Load the ROM(s)
-        rom0!!.loadProgram(genLEDCountUsingAdd())
+        rom0!!.loadProgram(genTestAND())
 
         // Create the graphics
         cpuPanel.initRenderers()
@@ -220,13 +221,13 @@ class Visualizer: JFrame() {
             val romBounds = Rectangle(Margin,Margin, 0, 0)
             romRenderer.initRenderer(rom0!!, romBounds)
             var ledStart = Point(romBounds.x + romBounds.width + 20, romBounds.y)
-            var ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 100)
-            led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 4, "IO ")
+            var ledEnd = Point(romBounds.x + romBounds.width + 20, romBounds.y + 200)
+            led0Renderer.initRenderer(led0Bus, ledStart, ledEnd, 8, "IO ")
             val ramBounds = Rectangle(leftRenderingBounds.width - romBounds.width - 150 - Margin,Margin, 0, 0)
             ramRenderer.initRenderer(ram0!!, ramBounds)
             ledStart = Point(ramBounds.x + ramBounds.width + 20, ramBounds.y)
-            ledEnd = Point(ramBounds.x + ramBounds.width + 20, ramBounds.y + 100)
-            led1Renderer.initRenderer(led1Bus, ledStart, ledEnd, 4, "IO ")
+            ledEnd = Point(ramBounds.x + ramBounds.width + 20, ramBounds.y + 200)
+            led1Renderer.initRenderer(led1Bus, ledStart, ledEnd, 8, "IO ")
 
             val extBusWidth = 30
             val extBusBounds = Rectangle(0,romBounds.y + romBounds.height + extBusWidth/2, leftRenderingBounds.width, 0)

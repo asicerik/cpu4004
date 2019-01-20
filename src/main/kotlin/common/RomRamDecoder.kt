@@ -24,6 +24,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
     var drivingBus = false
 
     var romMode = true              // Chip is a ROM by default
+    var omniMode = false            // If true, we respond for all device accesses (so we don't need lots of devices)
     private var id = 0L             // Which chip are we?
 
     // Flags
@@ -134,7 +135,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
             2 -> {
                 // This is a little bit of a hack. We are looking at the external bus here.
                 // This is because it is really hard to model the bus buffers in real-time.
-                chipSelected = (extBus.value == id) && (cm.clocked == 0)
+                chipSelected = ((extBus.value == id) || omniMode) && (cm.clocked == 0)
                 if (log.isDebugEnabled)
                     log.debug("Chip ID {} ROM={}: selected = {}, ADDR={}", id, romMode, chipSelected, addrReg.readDirect())
                 if (chipSelected && romMode) {
@@ -217,7 +218,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
                     bufDir = BufDirIn   // Transfer to the internal bus
                     if (romMode) {
                         srcDeviceID = intBus.read().and(0xf)
-                        if (srcDeviceID != id) {
+                        if (omniMode) {
+                            log.debug(String.format("ROM/RAM: Omni mode is on. Responding to all SRC commands"))
+                        } else if (srcDeviceID != id) {
                             log.debug(
                                 String.format(
                                     "ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
@@ -233,7 +236,9 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
                         // The upper two bits are the chip ID (4 RAMs/CM RAM line)
                         srcDeviceID = intBus.read().and(0xC).shr(2)
                         srcRegisterSel = intBus.read().and(0x3)
-                        if (srcDeviceID != id) {
+                        if (omniMode) {
+                            log.debug(String.format("ROM/RAM: Omni mode is on. Responding to all SRC commands"))
+                        } else if (srcDeviceID != id) {
                             log.debug(
                                 String.format(
                                     "ROM/RAM: SRC command was NOT for us. Our chipID=%02X, cmd chipID=%02X",
@@ -277,7 +282,15 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
                                 bufDir = BufDirIn   // Transfer to the internal bus
                                 // IO Write
                                 ioBus?.reset()
-                                ioBus?.write(intBus.read())
+                                if (omniMode && ioBus != null) {
+                                    var currVal = ioBus!!.value
+                                    var mask = 0xf.toLong().shl(srcDeviceID.toInt()*4)
+                                    currVal = currVal.and(mask.inv())
+                                    currVal = currVal.or(intBus.read().and(0xf).shl(srcDeviceID.toInt()*4))
+                                    ioBus?.write(currVal)
+                                } else {
+                                    ioBus?.write(intBus.read())
+                                }
                             }
                         }
                         WRR.toLong().and(0xff) -> {
@@ -285,7 +298,15 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
                                 bufDir = BufDirIn   // Transfer to the internal bus
                                 // IO Write
                                 ioBus?.reset()
-                                ioBus?.write(intBus.read())
+                                if (omniMode && ioBus != null) {
+                                    var currVal = ioBus!!.value
+                                    var mask = 0xf.toLong().shl(srcDeviceID.toInt()*4)
+                                    currVal = currVal.and(mask.inv())
+                                    currVal = currVal.or(intBus.read().and(0xf).shl(srcDeviceID.toInt()*4))
+                                    ioBus?.write(currVal)
+                                } else {
+                                    ioBus?.write(intBus.read())
+                                }
                             }
                         }
                     }

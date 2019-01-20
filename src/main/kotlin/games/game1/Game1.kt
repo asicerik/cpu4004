@@ -101,10 +101,10 @@ class Game1App: App() {
             glBindBuffer(GL_ARRAY_BUFFER, leds[i].obj.colorVbo)
             // Copy the updated data
             var on = false
-            if (i < 4) {
+            if (i < 8) {
                 on = cpu.ioBus.value.shr(i).and(1) == 1L
             } else {
-                on = cpu.outputBus.value.shr(i-4).and(1) == 1L
+                on = cpu.outputBus.value.shr(i-8).and(1) == 1L
             }
             leds[i].set(on)
             if (leds[i].changed)
