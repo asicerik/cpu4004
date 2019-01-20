@@ -15,15 +15,17 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    compile 'io.reactivex.rxjava2:rxjava:2.1.9'
-    compile 'io.reactivex.rxjava2:rxkotlin:2.2.0'
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.9'
+    implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
+    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
     testCompile group: 'org.assertj', name: 'assertj-core', version: '3.11.1'
 
     // OpenGL
+    implementation "org.joml:joml:1.9.12"
     implementation "org.lwjgl:lwjgl:$lwjglVersion"
     implementation "org.lwjgl:lwjgl-assimp:$lwjglVersion"
     implementation "org.lwjgl:lwjgl-bgfx:$lwjglVersion"
