@@ -59,7 +59,7 @@ class Visualizer: JFrame() {
 
     var renderingBounds = Rectangle()
     var leftRenderingBounds = Rectangle()
-    var leftWidth = 1200    // All the CPU stuff
+    var leftWidth = 1024    // All the CPU stuff
 
     // Panels
     var cpuPanel = CpuPanel()
@@ -143,7 +143,7 @@ class Visualizer: JFrame() {
 
     fun prepareGui(showLa: Boolean) {
 
-        setLocation(100, 0)
+        setLocation(0, 0)
         title = "j4004 CPU Visualizer"
 
         val mainPanel = JPanel()
@@ -153,11 +153,11 @@ class Visualizer: JFrame() {
         c.weighty = 1.0
         c.gridx = 0
         c.gridy = 0
-        cpuPanel.preferredSize = Dimension(leftWidth,1000)
+        cpuPanel.preferredSize = Dimension(leftWidth,900)
         mainPanel.add(cpuPanel, c)
 
         if (showLa) {
-            laPanel.preferredSize = Dimension(1000, 1400)
+            laPanel.preferredSize = Dimension(900, 1200)
             c.gridx = 1
             c.weightx = 1.0
             mainPanel.add(laPanel, c)
@@ -313,7 +313,7 @@ class Visualizer: JFrame() {
         }
         override fun paintComponent(g: Graphics?) {
             if (g != null) {
-                font = Font(MainFont, BOLD, MainFontSize)
+                g.font = Font(MainFont, BOLD, MainFontSize)
                 g.color = Color.darkGray
                 g.fillRect(0,0,bounds.width, bounds.height)
                 la.render(g)
@@ -335,6 +335,7 @@ class Visualizer: JFrame() {
             la.setChannel(pos++, "ALU", 4, cpuCore!!.aluCore.alu.value)
             la.setChannel(pos++, "ALUO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluOut).toLong())
             la.setChannel(pos++, "ACC", 4, cpuCore!!.aluCore.accum.readDirect())
+            la.setChannel(pos++, "CARRY", 1, cpuCore!!.aluCore.alu.carry)
             la.setChannel(pos++, "TMPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempLoad).toLong())
             la.setChannel(pos++, "TMPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempOut).toLong())
             la.setChannel(pos++, "TEMP", 4, cpuCore!!.aluCore.temp.readDirect())

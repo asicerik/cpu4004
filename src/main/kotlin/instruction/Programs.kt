@@ -79,7 +79,7 @@ fun genAND(data: MutableList<Byte>) {
     addInstruction(data, RAL)                 // Highest bit to carry
     addInstruction(data, XCH.or(1))     // Put shifted data into r1
     addInstruction(data, RAR)                 // 2nd "AND" bit to acc
-    addInstruction(data, ADD)                 // "AND" result is now in carry
+    addInstruction(data, ADD.or(2))     // "AND" result is now in carry
     // Jump back to loopstart
     addInstruction(data, JUN.or(loopStart.shr(8).and(0xf).toByte()))
     addInstruction(data, loopStart.and(0xff).toByte())

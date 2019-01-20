@@ -10,7 +10,7 @@ const val stackDepth = 3
 
 class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     val log = logger()
-    var stackPointer = 0
+    var stackPointer = -1
 
     val pc = Register(0L, clk)
     val stack = mutableListOf<Register>()
@@ -54,22 +54,23 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     fun stackPush() {
+        stackPointer++
         if (stackPointer == stackDepth) {
             log.warn("Stack overflow")
             return
         }
-        log.info(String.format("Stack PUSH: SP=%d (pre), PC=%03X", stackPointer, pc.readDirect()))
         stack[stackPointer].writeDirect(pc.readDirect())
-        stackPointer++
+        log.info(String.format("Stack PUSH: SP=%d (post), PC=%03X", stackPointer, pc.readDirect()))
     }
 
     fun stackPop() {
-        if (stackPointer == 0) {
+        if (stackPointer == -1) {
             log.warn("Stack underflow")
             return
         }
         pc.writeDirect(stack[stackPointer].readDirect())
         log.info(String.format("Stack POP: SP=%d (pre), PC=%03X", stackPointer, pc.readDirect()))
+        stack[stackPointer].writeDirect(0)
         stackPointer--
     }
 

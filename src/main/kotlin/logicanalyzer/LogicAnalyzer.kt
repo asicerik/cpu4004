@@ -16,9 +16,9 @@ class LogicAnalyzer {
     private var channels = mutableListOf<LogicAnalyzerChannel>()
     private var history = mutableListOf<List<LogicAnalyzerChannel>>()
     private val maxHistory = 16
-    private val channelHeight = 50
-    private val waveformHeight = 40
-    private val cycleWidth = 50
+    private val channelHeight = 40
+    private val waveformHeight = 30
+    private val cycleWidth = 45
     private var cycle = 0
     private var lock = ReentrantLock()
 

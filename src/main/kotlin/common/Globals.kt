@@ -18,9 +18,9 @@ val LedRedOff               = Color(0x700000)
 val LedRedBorder            = Color(0xF08080)
 
 val MainFont                = "Monospaced"
-val MainFontSize            = 24
-val RegisterWidth           = 110
-val RegisterHeight          = 40
+val MainFontSize            = 20
+val RegisterWidth           = 90
+val RegisterHeight          = 32
 val BusWidth                = 4     // this is a 4 bit processor
 
 const val BufDirNone = 0    // No transfer between busses
