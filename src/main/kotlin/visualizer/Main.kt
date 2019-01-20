@@ -91,7 +91,7 @@ class Visualizer: JFrame() {
         led1Bus.init(64, "")
 
         // Load the ROM(s)
-        rom0!!.loadProgram(genTestAND())
+        rom0!!.loadProgram(genLEDCountUsingAdd())
 
         // Create the graphics
         cpuPanel.initRenderers()

@@ -120,6 +120,7 @@ class Game1App: App() {
         if (activeLed == leds.size) {
             activeLed = 0
         }
+        cpu.ioBus.write(0L)
     }
 
     override fun handleKeyEvent(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {

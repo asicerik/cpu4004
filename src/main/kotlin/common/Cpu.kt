@@ -54,17 +54,21 @@ class Cpu() {
         var cpuClockCount = 0
 
         while (true) {
-            cpuClockCount++
-            emitter!!.onNext(0)
-            emitter!!.onNext(1)
-            val endTime = System.currentTimeMillis()
-            val interval = (endTime - startTime) / 1000.0
-            if (interval >= 1) {
-                cpuClockRate = cpuClockCount / interval
-                cpuClockCount = 0
-                startTime = endTime
+            // Bit 64 of iobus is the pause signal from the CPU
+            if (ioBus.value.shr(60) != 0L) {
+                Thread.sleep(1)
+            } else {
+                cpuClockCount++
+                emitter!!.onNext(0)
+                emitter!!.onNext(1)
+                val endTime = System.currentTimeMillis()
+                val interval = (endTime - startTime) / 1000.0
+                if (interval >= 1) {
+                    cpuClockRate = cpuClockCount / interval
+                    cpuClockCount = 0
+                    startTime = endTime
+                }
             }
-            Thread.sleep(1)
         }
 
     }

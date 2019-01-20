@@ -36,6 +36,23 @@ fun genLEDCountUsingAdd(): List<Byte> {
     addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM
     addInstruction(data, WRM)                   // Write accumulator to RAM memory
 
+    // Store the accumulator into r4
+    addInstruction(data, XCH.or(4))       // Swap accumulator with r4
+
+    // Set bit 63 of the i/o bus to indictate cycle is complete
+    addInstruction(data, LDM.or(15))      // Load 0 into the accumulator (chip ID)
+    addInstruction(data, XCH.or(2))       // Swap accumulator with r2
+    addInstruction(data, LDM.or(8))       // Load 8 into the accumulator (set bit 3 of the i/o bus)
+    addInstruction(data, SRC.or(2))       // Send address in r2,r3 to ROM/RAM
+    addInstruction(data, WRR)                   // Write accumulator to ROM
+
+    // Restore r2/r3 back to ROM 0
+    addInstruction(data, LDM.or(0))       // Load 0 into the accumulator (chip ID)
+    addInstruction(data, XCH.or(2))       // Swap accumulator with r2
+
+    // Restore the accumulator
+    addInstruction(data, XCH.or(4))       // Swap accumulator with r4
+
     addInstruction(data, JUN)                   // Jump back to ROM 0
     addInstruction(data, loopStart.toByte())    // Jump to start of loop
     // Fill the rest of the space up till 256
