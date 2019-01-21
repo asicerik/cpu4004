@@ -55,7 +55,8 @@ class Cpu {
 
         while (true) {
             // Bit 64 of iobus is the pause signal from the CPU
-            if (ioBus.value.shr(60) != 0UL) {
+            if (ioBus.value.shr(63) != 0UL) {
+                val value:ULong = ioBus.value.shr(63)
                 Thread.sleep(1)
             } else {
                 cpuClockCount++
