@@ -23,6 +23,6 @@ class RegisterRenderer {
         g.color = RegisterBorder
         g.drawRect(bounds.x,bounds.y,bounds.width, bounds.height)
         g.color = RegisterTextNormal
-        g.drawString(String.format("%s%x", reg?.name, reg?.reg?.clocked), bounds.x+10, bounds.y + MainFontSize + 2)
+        g.drawString(String.format("%s%x", reg?.name, reg?.reg?.clocked?.toLong()), bounds.x+10, bounds.y + MainFontSize + 2)
     }
 }

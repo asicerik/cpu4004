@@ -33,26 +33,26 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // WRM - write RAM memory character
-            val regPair = 6L
-            var ramBank = 0L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0xe
+            val regPair = 6
+            var ramBank = 0
+            val ramAddr = 0x20
+            val ramVal = 0xe
             // Load the accumulator with the ram bank we wish to use
-            runOneCycle(core, LDM.toLong().or(ramBank))
-            runOneCycle(core, DCL.toLong())
+            runOneCycle(core, LDM, ramBank)
+            runOneCycle(core, DCL, 0)
             // Load the RAM address into a register pair
-            loadRegisterPair(core, ramAddr, regPair)
+            loadRegisterPair(core, ramAddr.toULong(), regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(ramVal))
+            runOneCycle(core, LDM, ramVal)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-            assertThat(res2.second).isEqualTo(ramAddr)
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+            assertThat(res2.second).isEqualTo(ramAddr.toULong())
             // Run the WRM command
-            res2 = runOneIOCycle(core, WRM.toLong())
-            assertThat(res2.second.and(0xf)).isEqualTo(ramVal)
+            res2 = runOneIOCycle(core, WRM, 0)
+            assertThat(res2.second.and(0xfU)).isEqualTo(ramVal.toULong())
         }
 
         @Test
@@ -60,42 +60,42 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // WMP - write RAM output port
             // Start with the default RAM bank (0)
-            val regPair = 6L
-            var ramBank = 0L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0xe
+            val regPair = 6
+            var ramBank = 0
+            val ramAddr = 0x20
+            val ramVal = 0xe
             // Load the accumulator with the ram bank we wish to use
-            runOneCycle(core, LDM.toLong().or(ramBank))
-            runOneCycle(core, DCL.toLong())
+            runOneCycle(core, LDM, ramBank)
+            runOneCycle(core, DCL, 0)
             // Load the RAM address into a register pair
-            loadRegisterPair(core, ramAddr, regPair)
+            loadRegisterPair(core, ramAddr.toULong(), regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(ramVal))
+            runOneCycle(core, LDM, ramVal)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-            assertThat(res2.second).isEqualTo(ramAddr)
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+            assertThat(res2.second).isEqualTo(ramAddr.toULong())
             // Run the WMP command
-            res2 = runOneIOCycle(core, WMP.toLong())
-            assertThat(res2.second.and(0xf)).isEqualTo(ramVal)
+            res2 = runOneIOCycle(core, WMP, 0)
+            assertThat(res2.second.and(0xfU)).isEqualTo(ramVal.toULong())
 
             // Run again selecting RAM bank 3
             // See the comments in the ALU for how the decode works
             ramBank = 4
             // Load the accumulator with the ram bank we wish to use
-            runOneCycle(core, LDM.toLong().or(ramBank))
-            runOneCycle(core, DCL.toLong())
+            runOneCycle(core, LDM, ramBank)
+            runOneCycle(core, DCL, 0)
             // Load the accumulator with the output value
-            runOneCycle(core, LDM.toLong().or(ramVal))
+            runOneCycle(core, LDM, ramVal)
             // Run the SRC command
-            res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-            assertThat(res2.second).isEqualTo(ramAddr)
+            res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+            assertThat(res2.second).isEqualTo(ramAddr.toULong())
             // Run the WRR command
-            res2 = runOneIOCycle(core, WMP.toLong())
-            assertThat(res2.second.and(0xf)).isEqualTo(ramVal)
+            res2 = runOneIOCycle(core, WMP, 0)
+            assertThat(res2.second.and(0xfU)).isEqualTo(ramVal.toULong())
         }
 
         @Test
@@ -103,49 +103,49 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // WRR - write ROM i/o port
-            val regPair = 6L
-            val romAddr: Long = 0x20
-            val romVal: Long = 0xe
+            val regPair = 6
+            val romAddr = 0x20
+            val romVal = 0xe
             // Load the ROM address into a register pair
-            loadRegisterPair(core, romAddr, regPair)
+            loadRegisterPair(core, romAddr.toULong(), regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(romVal))
+            runOneCycle(core, LDM, romVal)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-            assertThat(res2.second).isEqualTo(romAddr)
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+            assertThat(res2.second).isEqualTo(romAddr.toULong())
             // Run the WRR command
-            res2 = runOneIOCycle(core, WRR.toLong())
-            assertThat(res2.second.and(0xf)).isEqualTo(romVal)
+            res2 = runOneIOCycle(core, WRR, 0)
+            assertThat(res2.second.and(0xfU)).isEqualTo(romVal.toULong())
         }
         @Test
         fun WRn() {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // WR0-3 - write RAM memory status character
-            val regPair = 6L
-            var ramBank = 0L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0xe
+            val regPair = 6
+            var ramBank = 0
+            val ramAddr = 0x20
+            val ramVal = 0xe
             // Load the accumulator with the ram bank we wish to use
-            runOneCycle(core, LDM.toLong().or(ramBank))
-            runOneCycle(core, DCL.toLong())
+            runOneCycle(core, LDM, ramBank)
+            runOneCycle(core, DCL, 0)
             // Load the RAM address into a register pair
-            loadRegisterPair(core, ramAddr, regPair)
+            loadRegisterPair(core, ramAddr.toULong(), regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(ramVal))
+            runOneCycle(core, LDM, ramVal)
             for (i in 0..3) {
                 // Run the SRC command
-                var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-                assertThat(res2.second).isEqualTo(ramAddr)
+                var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+                assertThat(res2.second).isEqualTo(ramAddr.toULong())
                 // Run the WRn command
-                res2 = runOneIOCycle(core, WR0.toLong().plus(i))
-                assertThat(res2.second.and(0xf)).isEqualTo(ramVal)
+                res2 = runOneIOCycle(core, WR0.plus(i.toUInt()), 0)
+                assertThat(res2.second.and(0xfU)).isEqualTo(ramVal.toULong())
             }
         }
         @Test
@@ -153,19 +153,19 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // RDM - read RAM character
-            val regPair = 6L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0xe
+            val regPair = 6
+            val ramAddr = 0x20UL
+            val ramVal = 0xeUL
             // Load the RAM address into a register pair
             loadRegisterPair(core, ramAddr, regPair)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the RDR command
-            runOneIOReadCycle(core, RDM.toLong(), ramVal)
+            runOneIOReadCycle(core, RDM, 0, ramVal)
             assertThat(core.aluCore.accum.readDirect()).isEqualTo(ramVal)
         }
         @Test
@@ -173,19 +173,19 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // RDR - read ROM i/o port
-            val regPair = 6L
-            val romAddr: Long = 0x20
-            val romVal: Long = 0xe
+            val regPair = 6
+            val romAddr = 0x20UL
+            val romVal = 0xeUL
             // Load the ROM address into a register pair
             loadRegisterPair(core, romAddr, regPair)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(romAddr)
             // Run the RDR command
-            runOneIOReadCycle(core, RDR.toLong(), romVal)
+            runOneIOReadCycle(core, RDR, 0, romVal)
             assertThat(core.aluCore.accum.readDirect()).isEqualTo(romVal)
         }
         @Test
@@ -193,20 +193,20 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // RD0-3 - rear RAM memory status character
-            val regPair = 6L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0xe
+            val regPair = 6
+            val ramAddr = 0x20UL
+            val ramVal = 0xeUL
             // Load the RAM address into a register pair
             loadRegisterPair(core, ramAddr, regPair)
             for (i in 0..3) {
                 // Run the SRC command
-                var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+                var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
                 assertThat(res2.second).isEqualTo(ramAddr)
                 // Run the RDR command
-                runOneIOReadCycle(core, RD0.toLong()+i, ramVal)
+                runOneIOReadCycle(core, RD0.plus(i.toUInt()), 0, ramVal)
                 assertThat(core.aluCore.accum.readDirect()).isEqualTo(ramVal)
             }
         }
@@ -215,24 +215,24 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // SBM - subtract RAM character value from accumulator
-            val regPair = 6L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0x4
-            var accumVal: Long = 0x9
+            val regPair = 6
+            val ramAddr = 0x20UL
+            val ramVal = 0x4
+            var accumVal = 0x9
             var expVal = accumVal - ramVal
             // Load the RAM address into a register pair
             loadRegisterPair(core, ramAddr, regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, SBM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, SBM, 0, ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 1 meaning no borrow occurred
             assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
             assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
@@ -241,28 +241,28 @@ class RomRamInstTests {
             accumVal = 4
             expVal = 1
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, SBM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, SBM, 0, ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 1 meaning no borrow occurred
             assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
             assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
 
             // Now clear the carry bit and run it again
-            runOneCycle(core, CLC.toLong())
+            runOneCycle(core, CLC, 0)
             expVal = 0
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, SBM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, SBM,0 , ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 1 meaning no borrow occurred
             assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
             // Zero bit should be set
@@ -272,15 +272,15 @@ class RomRamInstTests {
             accumVal = 1
             expVal = (accumVal - ramVal).and(0xf)
             // Clear the carry bit
-            runOneCycle(core, CLC.toLong())
+            runOneCycle(core, CLC, 0)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, SBM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, SBM, 0, ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 0 meaning borrow occurred
             assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
             assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
@@ -291,24 +291,24 @@ class RomRamInstTests {
             core.reset()
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            Assertions.assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
 
             // ADM - add RAM character value to accumulator
-            val regPair = 6L
-            val ramAddr: Long = 0x20
-            val ramVal: Long = 0x4
-            var accumVal: Long = 0x2
+            val regPair = 6
+            val ramAddr = 0x20UL
+            val ramVal = 0x4
+            var accumVal = 0x2
             var expVal = accumVal + ramVal
             // Load the RAM address into a register pair
             loadRegisterPair(core, ramAddr, regPair)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, ADM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, ADM, 0, ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 0
             assertThat(core.aluCore.getFlags().carry).isEqualTo(0)
             assertThat(core.aluCore.getFlags().zero).isEqualTo(0)
@@ -317,13 +317,13 @@ class RomRamInstTests {
             accumVal = 12
             expVal = (accumVal + ramVal).and(0xf)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(accumVal))
+            runOneCycle(core, LDM, accumVal)
             // Run the SRC command
-            res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
+            res2 = runOneIOCycle(core, SRC, regPair.shl(1))
             assertThat(res2.second).isEqualTo(ramAddr)
             // Run the SBM command
-            runOneIOReadCycle(core, ADM.toLong(), ramVal)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            runOneIOReadCycle(core, ADM, 0, ramVal.toULong())
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
             // Carry should equal 1 meaning a carry occurred
             assertThat(core.aluCore.getFlags().carry).isEqualTo(1)
             // Zero should also be set

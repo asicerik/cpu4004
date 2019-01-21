@@ -45,106 +45,106 @@ class RomTests {
         @Test
         fun Sync() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             fillEmptyProgramData(data)
             rom.loadProgram(data)
             // It will take two cycles since sync is sent on clock 7
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             assertThat(rom.syncSeen).isEqualTo(true)
         }
 
         @Test
         fun InstRead() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             // Sync the device
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             // Generate a simple program
-            addInstruction(data, 0x01)
-            addInstruction(data, 0x23)
-            addInstruction(data, 0x45)
-            addInstruction(data, 0x67)
+            addInstruction(data, 0x01U, 0)
+            addInstruction(data, 0x23U, 0)
+            addInstruction(data, 0x45U, 0)
+            addInstruction(data, 0x67U, 0)
             fillEmptyProgramData(data)
             rom.loadProgram(data)
             for (i in 0..3) {
-                val res = runOneCycle(rom, i.toLong())
-                assertThat(res).isEqualTo(data[i])
+                val res = runOneMemCycle(rom, i.toLong(), null, 0)
+                assertThat(res).isEqualTo(data[i].toUInt())
             }
         }
 
         @Test
         fun ChipID() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             // Sync the device
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             // Generate a simple program
-            addInstruction(data, 0xDE.toByte())
+            addInstruction(data, 0xDEU)
             fillEmptyProgramData(data)
             rom.loadProgram(data)
             // Make sure the rom responds to chip 0 addresses (the default)
-            var res = runOneCycle(rom, 0)
-            assertThat(res).isEqualTo(data[0])
+            var res = runOneMemCycle(rom, 0, null, 0)
+            assertThat(res).isEqualTo(data[0].toUInt())
             assertThat(rom.chipSelected).isTrue()
 
             // Now change the chip ID
             rom.setRomID(3)
             // Make sure the rom does NOT respond to chip 0 addresses
-            res = runOneCycle(rom, 0)
-            assertThat(res).isNotEqualTo(data[0])
+            res = runOneMemCycle(rom, 0, null, 0)
+            assertThat(res).isNotEqualTo(data[0].toUInt())
             assertThat(rom.chipSelected).isFalse()
 
             // Finally, check the ROM with the right address
             // Make sure the rom responds to chip 3 addresses
-            res = runOneCycle(rom, 0x300)
-            assertThat(res).isEqualTo(data[0])
+            res = runOneMemCycle(rom, 0x300, null, 0)
+            assertThat(res).isEqualTo(data[0].toUInt())
             assertThat(rom.chipSelected).isTrue()
         }
 
         @Test
         fun SRC() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             // Sync the device
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             // Generate a simple program
             addInstruction(data, SRC)
             addInstruction(data, FIM)
             fillEmptyProgramData(data)
             rom.loadProgram(data)
             // Make sure the rom responds to chip ID 0
-            runOneSRCCycle(rom, 0, 0L)
+            runOneSRCCycle(rom, 0, 0U)
             assertThat(rom.srcDetected).isTrue()
 
             // Make sure the rom does NOT respond to chip ID != 0
-            runOneSRCCycle(rom, 0, 0x10L)
+            runOneSRCCycle(rom, 0, 0x10U)
             assertThat(rom.srcDetected).isFalse()
 
             // Make sure the rom does not confuse a FIM with a SRC
             // since they share the same upper 4 bits
-            runOneSRCCycle(rom, 1, 0L)
+            runOneSRCCycle(rom, 1, 0U)
             assertThat(rom.srcDetected).isFalse()
         }
         @Test
         fun IoWrite() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             // Sync the device
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             // Generate a simple program
             addInstruction(data, SRC)
             addInstruction(data, WRR)
             fillEmptyProgramData(data)
             rom.loadProgram(data)
-            val ioData:Long = 0xB
+            val ioData = 0xBUL
 
             // Run the SRC command first to arm the device
-            runOneSRCCycle(rom, 0, 0L)
+            runOneSRCCycle(rom, 0, 0U)
             assertThat(rom.srcDetected).isTrue()
             runOneIoWriteCycle(rom, 1, ioData)
             assertThat(ioBus.value).isEqualTo(ioData)
@@ -152,24 +152,24 @@ class RomTests {
         @Test
         fun IoRead() {
             rom.reset()
-            var data = mutableListOf<Byte>()
+            var data = mutableListOf<UByte>()
             // Sync the device
-            runOneCycle(rom, 0)
-            runOneCycle(rom, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
+            runOneMemCycle(rom, 0, NOP, 0)
             // Generate a simple program
             addInstruction(data, SRC)
             addInstruction(data, RDR)
             fillEmptyProgramData(data)
             rom.loadProgram(data)
-            val ioData:Long = 0xB
+            val ioData = 0xBUL
             // Write the ioData to the ioBus
             ioBus.write(ioData)
 
             // Run the SRC command first to arm the device
-            runOneSRCCycle(rom, 0, 0L)
+            runOneSRCCycle(rom, 0, 0U)
             assertThat(rom.srcDetected).isTrue()
-            val res = romram.runOneIOReadCycle(rom, 1)
-            assertThat(res.second).isEqualTo(ioData.toByte())
+            val res = romram.runOneIOReadCycle(rom, 1, 0U, 0)
+            assertThat(res.second).isEqualTo(ioData)
         }
 
     }

@@ -20,7 +20,7 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
 
     init {
         for (i in 0 until indexRegisters) {
-            regs.add(Register(0L, clk))
+            regs.add(Register(0U, clk))
             regs[i].init(dataBus, BusWidth, "")
         }
     }
@@ -43,12 +43,12 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
         drivingBus = true
     }
 
-    fun readDirect(indexIn: Int): Long {
+    fun readDirect(indexIn: Int): ULong {
         return regs[indexIn].readDirect()
     }
 
     // This should only be used for testing
-    fun writeDirect(indexIn: Int, value: Long) {
+    fun writeDirect(indexIn: Int, value: ULong) {
         regs[indexIn].writeDirect(value)
     }
 
@@ -60,13 +60,13 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     fun increment() {
-        regs[index].writeDirect((regs[index].readDirect()+1).and(regs[index].mask))
+        regs[index].writeDirect((regs[index].readDirect()+1U).and(regs[index].mask))
         if (log.isTraceEnabled) {
             log.trace(String.format("Incremented index register %d. New value is %X", index, regs[index].readDirect()))
         }
     }
 
     fun isRegisterZero(): Boolean {
-        return regs[index].readDirect() == 0L
+        return regs[index].readDirect() == 0UL
     }
 }

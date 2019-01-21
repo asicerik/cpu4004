@@ -12,7 +12,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     val log = logger()
     var stackPointer = -1
 
-    val pc = Register(0L, clk)
+    val pc = Register(0U, clk)
     val stack = mutableListOf<Register>()
 
     // Renderer stuff
@@ -21,7 +21,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     init {
         pc.init(null, 12, "PC  ")
         for (i in 0 until stackDepth) {
-            stack.add(Register(0, clk))
+            stack.add(Register(0U, clk))
             stack[i].init(dataBus, BusWidth, String.format("Level %d ", i))
         }
     }
@@ -37,7 +37,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
         pc.increment()
     }
 
-    fun getProgramCounter(): Long {
+    fun getProgramCounter(): ULong {
         return pc.readDirect()
     }
 
@@ -60,7 +60,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
             return
         }
         stack[stackPointer].writeDirect(pc.readDirect())
-        log.info(String.format("Stack PUSH: SP=%d (post), PC=%03X", stackPointer, pc.readDirect()))
+        log.info(String.format("Stack PUSH: SP=%d (post), PC=%03X", stackPointer, pc.readDirect().toLong()))
     }
 
     fun stackPop() {
@@ -69,8 +69,8 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
             return
         }
         pc.writeDirect(stack[stackPointer].readDirect())
-        log.info(String.format("Stack POP: SP=%d (pre), PC=%03X", stackPointer, pc.readDirect()))
-        stack[stackPointer].writeDirect(0)
+        log.info(String.format("Stack POP: SP=%d (pre), PC=%03X", stackPointer, pc.readDirect().toLong()))
+        stack[stackPointer].writeDirect(0U)
         stackPointer--
     }
 

@@ -1,83 +1,82 @@
 package cpucore
 
 import utils.logger
-import kotlin.experimental.or
 
-const val NOP = 0x00.toByte() // No Operation
-const val JCN = 0x10.toByte() // Jump conditional
-const val FIM = 0x20.toByte() // Fetch immediate
-const val SRC = 0x21.toByte() // Send address to ROM/RAM
-const val FIN = 0x30.toByte() // Fetch indirect from ROM
-const val JIN = 0x31.toByte() // Jump indirect from current register pair
-const val JUN = 0x40.toByte() // Jump unconditional
-const val JMS = 0x50.toByte() // Jump to subroutine
-const val INC = 0x60.toByte() // Increment register
-const val ISZ = 0x70.toByte() // Increment register and jump if zero
-const val ADD = 0x80.toByte() // Add register to accumulator with carry
-const val SUB = 0x90.toByte() // Subtract register from accumulator with borrow
-const val LD  = 0xA0.toByte() // Load register into accumulator
-const val XCH = 0xB0.toByte() // Exchange the accumulator and scratchpad register
-const val BBL = 0xC0.toByte() // Branch back (stack pop)
-const val LDM = 0xD0.toByte() // Load direct into accumulator
-const val IO  = 0xE0.toByte() // Alias for all the I/O instructions
-const val WRM = 0xE0.toByte() // RAM character write
-const val WMP = 0xE1.toByte() // RAM Output write
-const val WRR = 0xE2.toByte() // ROM I/O write
-const val WR0 = 0xE4.toByte() // RAM status 0 write
-const val WR1 = 0xE5.toByte() // RAM status 1 write
-const val WR2 = 0xE6.toByte() // RAM status 2 write
-const val WR3 = 0xE7.toByte() // RAM status 3 write
-const val SBM = 0xE8.toByte() // Subtract RAM character from accumulator
-const val RDM = 0xE9.toByte() // RAM character read
-const val RDR = 0xEA.toByte() // ROM I/O read
-const val ADM = 0xEB.toByte() // Add RAM character to accumulator
-const val RD0 = 0xEC.toByte() // RAM status 0 read
-const val RD1 = 0xED.toByte() // RAM status 1 read
-const val RD2 = 0xEE.toByte() // RAM status 2 read
-const val RD3 = 0xEF.toByte() // RAM status 3 read
-const val ACC = 0xF0.toByte() // Alias for all the accumulator instructions
+val NOP = 0x00.toUInt() // No Operation
+val JCN = 0x10.toUInt() // Jump conditional
+val FIM = 0x20.toUInt() // Fetch immediate
+val SRC = 0x21.toUInt() // Send address to ROM/RAM
+val FIN = 0x30.toUInt() // Fetch indirect from ROM
+val JIN = 0x31.toUInt() // Jump indirect from current register pair
+val JUN = 0x40.toUInt() // Jump unconditional
+val JMS = 0x50.toUInt() // Jump to subroutine
+val INC = 0x60.toUInt() // Increment register
+val ISZ = 0x70.toUInt() // Increment register and jump if zero
+val ADD = 0x80.toUInt() // Add register to accumulator with carry
+val SUB = 0x90.toUInt() // Subtract register from accumulator with borrow
+val LD  = 0xA0.toUInt() // Load register into accumulator
+val XCH = 0xB0.toUInt() // Exchange the accumulator and scratchpad register
+val BBL = 0xC0.toUInt() // Branch back (stack pop)
+val LDM = 0xD0.toUInt() // Load direct into accumulator
+val IO  = 0xE0.toUInt() // Alias for all the I/O instructions
+val WRM = 0xE0.toUInt() // RAM character write
+val WMP = 0xE1.toUInt() // RAM Output write
+val WRR = 0xE2.toUInt() // ROM I/O write
+val WR0 = 0xE4.toUInt() // RAM status 0 write
+val WR1 = 0xE5.toUInt() // RAM status 1 write
+val WR2 = 0xE6.toUInt() // RAM status 2 write
+val WR3 = 0xE7.toUInt() // RAM status 3 write
+val SBM = 0xE8.toUInt() // Subtract RAM character from accumulator
+val RDM = 0xE9.toUInt() // RAM character read
+val RDR = 0xEA.toUInt() // ROM I/O read
+val ADM = 0xEB.toUInt() // Add RAM character to accumulator
+val RD0 = 0xEC.toUInt() // RAM status 0 read
+val RD1 = 0xED.toUInt() // RAM status 1 read
+val RD2 = 0xEE.toUInt() // RAM status 2 read
+val RD3 = 0xEF.toUInt() // RAM status 3 read
+val ACC = 0xF0.toUInt() // Alias for all the accumulator instructions
 // Accumulator instructions
-val CLB = ACC.or(0x0) // Clear accumulator and carry
-val CLC = ACC.or(0x1) // Clear carry
-val IAC = ACC.or(0x2) // Increment accumulator
-val CMC = ACC.or(0x3) // Complement carry
-val CMA = ACC.or(0x4) // Complement accumulator
-val RAL = ACC.or(0x5) // Rotate left (accumulator and carry)
-val RAR = ACC.or(0x6) // Rotate right (accumulator and carry)
-val TCC = ACC.or(0x7) // Transmit carry to accumulator and clear carry
-val DAC = ACC.or(0x8) // Decrement accumulator
-val TCS = ACC.or(0x9) // Transmit carry subtract and clear carry
-val STC = ACC.or(0xA) // Set carry
-val DAA = ACC.or(0xB) // Decimal adjust
-val KBP = ACC.or(0xC) // Keyboard process
-val DCL = ACC.or(0xD) // Designate command line
+val CLB = ACC.or(0x0U) // Clear accumulator and carry
+val CLC = ACC.or(0x1U) // Clear carry
+val IAC = ACC.or(0x2U) // Increment accumulator
+val CMC = ACC.or(0x3U) // Complement carry
+val CMA = ACC.or(0x4U) // Complement accumulator
+val RAL = ACC.or(0x5U) // Rotate left (accumulator and carry)
+val RAR = ACC.or(0x6U) // Rotate right (accumulator and carry)
+val TCC = ACC.or(0x7U) // Transmit carry to accumulator and clear carry
+val DAC = ACC.or(0x8U) // Decrement accumulator
+val TCS = ACC.or(0x9U) // Transmit carry subtract and clear carry
+val STC = ACC.or(0xAU) // Set carry
+val DAA = ACC.or(0xBU) // Decimal adjust
+val KBP = ACC.or(0xCU) // Keyboard process
+val DCL = ACC.or(0xDU) // Designate command line
 
 // Some helpers
 // You can use any of these three in combination
-const val JCN_TEST_SET = 0x11  // Jump if test bit is set
-const val JCN_CARRY_SET = 0x12 // Jump if carry bit is set
-const val JCN_ZERO_SET = 0x14  // Jump if accumulator is zero
+val JCN_TEST_SET = 0x11  // Jump if test bit is set
+val JCN_CARRY_SET = 0x12 // Jump if carry bit is set
+val JCN_ZERO_SET = 0x14  // Jump if accumulator is zero
 // You can use any of these three in combination
-const val JCN_TEST_UNSET = 0x19  // Jump if test bit is NOT set
-const val JCN_CARRY_UNSET = 0x1A // Jump if carry bit is NOT set
-const val JCN_ZERO_UNSET = 0x1C  // Jump if accumulator is NOT zero
+val JCN_TEST_UNSET = 0x19  // Jump if test bit is NOT set
+val JCN_CARRY_UNSET = 0x1A // Jump if carry bit is NOT set
+val JCN_ZERO_UNSET = 0x1C  // Jump if accumulator is NOT zero
 
 // From the instruction decoder
-const val AluIntModeNone = 0
-const val AluIntModeAdd = 1
-const val AluIntModeSub = 2
+val AluIntModeNone = 0
+val AluIntModeAdd = 1
+val AluIntModeSub = 2
 
-const val AluAdd = "+"
-const val AluSub = "-"
-const val AluNone = ""
+val AluAdd = "+"
+val AluSub = "-"
+val AluNone = ""
 
 data class AluFlags(
     var zero: Int,  // The accumulator is zero
     var carry: Int  // The carry bit is set
 )
 
-const val FlagPosZero  = 0x2L
-const val FlagPosCarry = 0x4L
+val FlagPosZero  = 0x2UL
+val FlagPosCarry = 0x4UL
 
 enum class FlagTypes {
     // External I/O Comes first in the list

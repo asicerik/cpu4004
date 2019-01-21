@@ -88,7 +88,7 @@ class Decoder(clk: Observable<Int>) {
         }
     }
 
-    fun calculateFlags(intBus: Bus, inst: Long) {
+    fun calculateFlags(intBus: Bus, inst: ULong) {
         // Continue to decode instructions after clock 5
         if (clkCount.raw != 5 && !decodeAgain && currInstruction > 0) {
             decodeCurrentInstruction(false)
@@ -117,7 +117,7 @@ class Decoder(clk: Observable<Int>) {
                 writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
                 // We need to check for IO ops here. We have not run the decode yet.
                 // but we need to assert the CM* lines
-                if (intBus.value == IO.toLong().shr(4)) {
+                if (intBus.value == IO.toULong().shr(4)) {
                     writeFlag(FlagTypes.CmRom, 1)
                     writeFlag(FlagTypes.CmRam, 1)
                 }
@@ -125,7 +125,7 @@ class Decoder(clk: Observable<Int>) {
             4 -> {
                 writeFlag(FlagTypes.InstRegLoad, 2) // load the upper nybble of the inst register
                 writeFlag(FlagTypes.BusDir, BufDirIn) // Transfer to the internal bus
-                if (intBus.value == IO.toLong().shr(4).and(0xf)) {
+                if (intBus.value == IO.toULong().shr(4).and(0xfU)) {
                     writeFlag(FlagTypes.CmRom, 1)
                     writeFlag(FlagTypes.CmRam, 1)
                 }
@@ -137,7 +137,7 @@ class Decoder(clk: Observable<Int>) {
                 writeFlag(FlagTypes.BusDir, BufDirOut)// Transfer to the external bus
                 // We need to peek into the instruction value to see if this is an IO read
                 // All I/O reads have bit 3 set
-                if (inst.and(0xf0).toByte() == IO && intBus.value.and(0x8) == 0x8L) {
+                if (inst.and(0xf0U).toUInt() == IO && intBus.value.and(0x8U) == 0x8UL) {
                     x2IsRead = true
                 }
             }
@@ -166,10 +166,10 @@ class Decoder(clk: Observable<Int>) {
         }
     }
 
-    fun setCurrentInstruction(inst: Long, evalResult: Boolean) {
+    fun setCurrentInstruction(inst: ULong, evalResult: Boolean) {
         if (dblInstruction == 0) {
-            if (inst != 0L) {
-                log.debug(String.format("SetCurrentInstruction: %02X", inst))
+            if (inst != 0UL) {
+                log.debug(String.format("SetCurrentInstruction: %02X", inst.toLong()))
             }
             currInstruction = inst.toInt()
         } else {
@@ -180,14 +180,14 @@ class Decoder(clk: Observable<Int>) {
 
     fun decodeCurrentInstruction(evalResult: Boolean) {
         // The upper 4 bits of the instruction
-        val opr = currInstruction.and(0xf0).toByte()
-        val fullInst = currInstruction.toByte()
+        val opr = currInstruction.and(0xf0).toUInt()
+        val fullInst = currInstruction.toUInt()
         when (opr) {
             // Note FIN and JIN share the same upper 4 bits
-            FIN.toInt().and(0xf0).toByte() ->
+            FIN.and(0xf0U) ->
                 handleFIN_JIN(this, fullInst.toLong())
             JCN, JMS, ISZ, JUN ->
-                handleJCN_JMS_ISZ_JUN(this, fullInst.toLong(), evalResult)
+                handleJCN_JMS_ISZ_JUN(this, fullInst.toULong(), evalResult)
             XCH ->
                 handleXCH(this)
             LDM ->

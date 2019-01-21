@@ -13,7 +13,7 @@ import utils.logger
 const val maxRams   = 16        // Max number of RAM chips we can have in the system
 const val maxRoms   = 16        // Max number of ROM chips we can have in the system
 
-class Cpu() {
+class Cpu {
     private var log = logger()
     private var extDataBus  = Bus()
     var ioBus       = Bus() // Input/output bus connects to ROM
@@ -44,7 +44,7 @@ class Cpu() {
         return true
     }
 
-    fun loadProgram(data: List<Byte>): Boolean {
+    fun loadProgram(data: List<UByte>): Boolean {
         rom!!.loadProgram(data)
         return true
     }
@@ -55,7 +55,7 @@ class Cpu() {
 
         while (true) {
             // Bit 64 of iobus is the pause signal from the CPU
-            if (ioBus.value.shr(60) != 0L) {
+            if (ioBus.value.shr(60) != 0UL) {
                 Thread.sleep(1)
             } else {
                 cpuClockCount++

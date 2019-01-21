@@ -38,7 +38,7 @@ class IoBusRenderer {
 
     fun render(g: Graphics) {
         for (i in 0 until leds.size) {
-            val bit = bus.read().shr(i).and(1)
+            val bit = bus.read().shr(i).and(1U)
             val led = leds[i]
             led.render(g, bit.toByte())
         }

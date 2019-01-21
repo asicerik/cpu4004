@@ -4,7 +4,6 @@ import common.*
 import cpucore.CpuCore
 import cpucore.FlagTypes
 import instruction.genLEDCountUsingAdd
-import instruction.genTestAND
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
@@ -107,12 +106,12 @@ class Visualizer: JFrame() {
                 extDataBus.reset()
                 emitter!!.onNext(0)
                 if (runFlags.showLa)
-                    laPanel.updateLa(0)
+                    laPanel.updateLa(0U)
 
                 //Thread.sleep(100)
                 emitter!!.onNext(1)
                 if (runFlags.showLa)
-                    laPanel.updateLa(1)
+                    laPanel.updateLa(1U)
 //                Thread.sleep(250)
                 repaint()
                 cycleCount++
@@ -283,7 +282,7 @@ class Visualizer: JFrame() {
             val scroller = JScrollPane(laView)
             add(scroller, c)
         }
-        fun updateLa(clock: Long) {
+        fun updateLa(clock: ULong) {
             laView.updateLa(clock)
         }
     }
@@ -291,17 +290,17 @@ class Visualizer: JFrame() {
     // Create a panel to hold the Logic Analyzer Scroller
     inner class LogicAnalyzerMainView: JPanel() {
         val la = LogicAnalyzer()
-        fun updateLa(clock: Long) {
+        fun updateLa(clock: ULong) {
             var dim = Dimension()
 
             // Set the logic analyzer channels
             var pos = 0
             la.setChannel(pos++, "CLK", 1, clock)
-            la.setChannel(pos++, "CNT", 4, cpuCore!!.getClkCount().toLong())
-            la.setChannel(pos++, "SYNC", 1, cpuCore!!.sync.clocked.toLong())
+            la.setChannel(pos++, "CNT", 4, cpuCore!!.getClkCount().toULong())
+            la.setChannel(pos++, "SYNC", 1, cpuCore!!.sync.clocked.toULong())
             la.setChannel(pos++, "PC", 12, cpuCore!!.addrStack.getProgramCounter())
-            la.setChannel(pos++, "PC+", 1, cpuCore!!.decoder.readFlag(FlagTypes.PCInc).toLong())
-            la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toLong())
+            la.setChannel(pos++, "PC+", 1, cpuCore!!.decoder.readFlag(FlagTypes.PCInc).toULong())
+            la.setChannel(pos++, "PCOUT", 2, cpuCore!!.decoder.readFlag(FlagTypes.PCOut).toULong())
             la.setChannel(pos++, "XBUS", 4, extDataBus.read())
 
             pos = addCpuGroup(pos)
@@ -322,26 +321,26 @@ class Visualizer: JFrame() {
         fun addCpuGroup(posIn: Int): Int {
             var pos = posIn
             la.setChannel(pos++, "CPUBUS", 4, cpuCore!!.intDataBus.read())
-            la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toLong())
-            la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toLong())
+            la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toULong())
+            la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toULong())
             la.setChannel(pos++, "INST", 8, cpuCore!!.instReg.getInstructionRegister())
-            la.setChannel(pos++, "CURR", 8, cpuCore!!.decoder.currInstruction.toLong().and(0xff))
-            la.setChannel(pos++, "DEC", 1, cpuCore!!.decoder.readFlag(FlagTypes.DecodeInstruction).toLong())
-            la.setChannel(pos++, "INSTO", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegOut).toLong())
-            la.setChannel(pos++, "ACCLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccLoad).toLong())
-            la.setChannel(pos++, "ACCO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccOut).toLong())
-            la.setChannel(pos++, "ALUM", 2, cpuCore!!.decoder.readFlag(FlagTypes.AluMode).toLong())
-            la.setChannel(pos++, "ALUE", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluEval).toLong())
+            la.setChannel(pos++, "CURR", 8, cpuCore!!.decoder.currInstruction.toULong().and(0xffU))
+            la.setChannel(pos++, "DEC", 1, cpuCore!!.decoder.readFlag(FlagTypes.DecodeInstruction).toULong())
+            la.setChannel(pos++, "INSTO", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegOut).toULong())
+            la.setChannel(pos++, "ACCLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccLoad).toULong())
+            la.setChannel(pos++, "ACCO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AccOut).toULong())
+            la.setChannel(pos++, "ALUM", 2, cpuCore!!.decoder.readFlag(FlagTypes.AluMode).toULong())
+            la.setChannel(pos++, "ALUE", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluEval).toULong())
             la.setChannel(pos++, "ALU", 4, cpuCore!!.aluCore.alu.value)
-            la.setChannel(pos++, "ALUO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluOut).toLong())
+            la.setChannel(pos++, "ALUO", 1, cpuCore!!.decoder.readFlag(FlagTypes.AluOut).toULong())
             la.setChannel(pos++, "ACC", 4, cpuCore!!.aluCore.accum.readDirect())
             la.setChannel(pos++, "CARRY", 1, cpuCore!!.aluCore.alu.carry)
-            la.setChannel(pos++, "TMPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempLoad).toLong())
-            la.setChannel(pos++, "TMPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempOut).toLong())
+            la.setChannel(pos++, "TMPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempLoad).toULong())
+            la.setChannel(pos++, "TMPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.TempOut).toULong())
             la.setChannel(pos++, "TEMP", 4, cpuCore!!.aluCore.temp.readDirect())
-            la.setChannel(pos++, "SEL", 4, cpuCore!!.indexRegisters.index.toLong())
-            la.setChannel(pos++, "SPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.IndexLoad).toLong())
-            la.setChannel(pos++, "SPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.ScratchPadOut).toLong())
+            la.setChannel(pos++, "SEL", 4, cpuCore!!.indexRegisters.index.toULong())
+            la.setChannel(pos++, "SPLD", 1, cpuCore!!.decoder.readFlag(FlagTypes.IndexLoad).toULong())
+            la.setChannel(pos++, "SPO", 1, cpuCore!!.decoder.readFlag(FlagTypes.ScratchPadOut).toULong())
             return pos
         }
         fun addRomGroup(posIn: Int): Int {
@@ -351,18 +350,18 @@ class Visualizer: JFrame() {
                 cs = 1
 
             la.setChannel(pos++, "CPUBUS", 4, cpuCore!!.intDataBus.read())
-            la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toLong())
-            la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toLong())
+            la.setChannel(pos++, "CPUDIR", 2, cpuCore!!.decoder.readFlag(FlagTypes.BusDir).toULong())
+            la.setChannel(pos++, "INSTLD", 2, cpuCore!!.decoder.readFlag(FlagTypes.InstRegLoad).toULong())
             la.setChannel(pos++, "INST", 8, cpuCore!!.instReg.getInstructionRegister())
             la.setChannel(pos++, "ROMBUS", 4, rom0!!.intBus.value)
             la.setChannel(pos++, "LED0BUS", 4, led0Bus.value)
-            la.setChannel(pos++, "RALOAD", 2, rom0!!.addrLoad.toLong())
+            la.setChannel(pos++, "RALOAD", 2, rom0!!.addrLoad.toULong())
             la.setChannel(pos++, "ROMADDR", 4, rom0!!.addrReg.readDirect())
-            la.setChannel(pos++, "CMROM", 1, cpuCore!!.cmRom.clocked.toLong())
-            la.setChannel(pos++, "CMRAM", 4, cpuCore!!.cmRam.clocked.toLong())
-            la.setChannel(pos++, "ROMDIR", 2, rom0!!.bufDir.toLong())
-            la.setChannel(pos++, "ROMOUT", 2, rom0!!.romDataOut.toLong())
-            la.setChannel(pos++, "ROMCS", 1, cs.toLong())
+            la.setChannel(pos++, "CMROM", 1, cpuCore!!.cmRom.clocked.toULong())
+            la.setChannel(pos++, "CMRAM", 4, cpuCore!!.cmRam.clocked.toULong())
+            la.setChannel(pos++, "ROMDIR", 2, rom0!!.bufDir.toULong())
+            la.setChannel(pos++, "ROMOUT", 2, rom0!!.romDataOut.toULong())
+            la.setChannel(pos++, "ROMCS", 1, cs.toULong())
             return pos
         }
     }

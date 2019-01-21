@@ -3,7 +3,7 @@ package common
 import io.reactivex.Observable
 import utils.logger
 
-class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
+class Register(initialVal: ULong, clk: Observable<Int>): Maskable() {
     val log = logger()
 
     var dataBus:Bus? = null
@@ -51,30 +51,30 @@ class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
     }
 
     // ReadDirect directly reads the register instead of using the bus
-    fun readDirect(): Long {
+    fun readDirect(): ULong {
         return reg.clocked.and(mask)
     }
 
     // ReadDirectRaw directly reads the registers input
     // This should be used very carefull
-    fun readDirectRaw(): Long {
+    fun readDirectRaw(): ULong {
         return reg.raw.and(mask)
     }
 
     // ReadDirect directly reads one nybble of the register instead of using the bus
-    fun readNybbleDirect(nybble: Int): Long {
-        return reg.clocked.shr(nybble * 4).and(0xf)
+    fun readNybbleDirect(nybble: Int): ULong {
+        return reg.clocked.shr(nybble * 4).and(0xfUL)
     }
 
     // WriteDirect directly writes the register instead of using the bus
-    fun writeDirect(value: Long) {
+    fun writeDirect(value: ULong) {
         reg.raw = value.and(mask)
     }
 
     // writeNybbleDirect directly writes one nybble of the register instead of using the bus
-    fun writeNybbleDirect(nybble: Int, value: Long) {
+    fun writeNybbleDirect(nybble: Int, value: ULong) {
         var curr = reg.raw
-        val wrMask = 0xf.toLong().shl(nybble*4)
+        val wrMask = 0xf.toULong().shl(nybble*4)
         val rdMask = wrMask.inv().and(mask)
         reg.raw = (value.shl(nybble*4).and(wrMask).or(curr.and(rdMask)))
     }
@@ -82,6 +82,6 @@ class Register(initialVal: Long, clk: Observable<Int>): Maskable() {
     // Increment directly increments the value in a register
     // Not sure all hardware supports this
     fun increment() {
-        reg.raw = (reg.clocked + 1).and(mask)
+        reg.raw = (reg.clocked + 1UL).and(mask)
     }
 }

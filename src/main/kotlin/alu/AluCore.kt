@@ -13,14 +13,14 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     val log = logger()
 
     val alu = Alu(BusWidth, dataBus, clk)
-    val accum = Register(0L, clk)
-    val temp = Register(0L, clk)
-    val flags = Register(0L, clk)
+    val accum = Register(0U, clk)
+    val temp = Register(0U, clk)
+    val flags = Register(0U, clk)
     val accumBus = Bus()
     val tempBus = Bus()
     val flagsBus = Bus()
     val mode = ""
-    var currentRamBank = 1L
+    var currentRamBank = 1U
         private set
     var accumDrivingBus = false
     var tempDrivingBus  = false
@@ -43,24 +43,24 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         flags.reset()
         alu.reset()
         updateFlags()
-        currentRamBank = 1L
+        currentRamBank = 1U
     }
 
     fun swap() {
         val tmp = temp.readDirect()
         temp.writeDirect(accum.readDirect())
         accum.writeDirect(tmp)
-        log.trace(String.format("ALU Swap. accum=%X, temp=%X", accum.readDirect(), temp.readDirect()))
+        log.trace(String.format("ALU Swap. accum=%X, temp=%X", accum.readDirect().toLong(), temp.readDirect().toLong()))
     }
 
     fun writeAccumulator() {
         accum.write()
-        log.trace(String.format("ACCUM write with %X", dataBus.read()))
+        log.trace(String.format("ACCUM write with %X", dataBus.read().toLong()))
     }
 
     fun writeTemp() {
         temp.write()
-        log.trace(String.format("Temp write with %X", dataBus.read()))
+        log.trace(String.format("Temp write with %X", dataBus.read().toLong()))
     }
 
     fun readAccumulator() {
@@ -71,7 +71,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         temp.read()
     }
 
-    fun readTempDirect(): Long {
+    fun readTempDirect(): ULong {
         return temp.readDirect()
     }
 
@@ -80,7 +80,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         flagsDrivingBus = true
     }
 
-    fun readFlagsDirect(): Long {
+    fun readFlagsDirect(): ULong {
         return flags.readDirect()
     }
 
@@ -113,24 +113,24 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
     fun getFlags(): AluFlags {
         val flagsRaw = updateFlags()
         val flagsVal = AluFlags(0,0)
-        if (flagsRaw.and(FlagPosZero) != 0L) {
+        if (flagsRaw.and(FlagPosZero) != 0UL) {
             flagsVal.zero = 1
         }
-        if (flagsRaw.and(FlagPosCarry) != 0L) {
+        if (flagsRaw.and(FlagPosCarry) != 0UL) {
             flagsVal.carry = 1
         }
         return flagsVal
     }
 
-    fun updateFlags(): Long {
+    fun updateFlags(): ULong {
         val accum = accum.readDirect()
         var flagsVal = flags.readDirect()
-        if (accum == 0L) {
+        if (accum == 0UL) {
             flagsVal = flagsVal.or(FlagPosZero)
         } else {
             flagsVal = flagsVal.and(FlagPosZero.inv())
         }
-        if (alu.carry != 0L) {
+        if (alu.carry != 0UL) {
             flagsVal = flagsVal.or(FlagPosCarry)
         } else {
             flagsVal = flagsVal.and(FlagPosCarry.inv())
@@ -139,22 +139,22 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         return flagsVal
     }
 
-    fun exectuteAccInst(inst: Byte) {
+    fun exectuteAccInst(inst: UInt) {
         var accumPre = accum.readDirect()
         var carryPre = getFlags().carry
         // All this stuff is NOT cycle accurate. Who knows how this works
         // in the read CPU. Probably not this way though :)
         when (inst) {
             CLB -> {
-                accum.writeDirect(0)
-                alu.setCarryVal(0)
+                accum.writeDirect(0U)
+                alu.setCarryVal(0U)
             }
             CLC -> {
-                alu.setCarryVal(0)
+                alu.setCarryVal(0U)
             }
             IAC -> {
                 alu.setAluMode(AluAdd)
-                alu.evaluate(accum.readDirect(), 1)
+                alu.evaluate(accum.readDirect(), 1U)
                 accum.writeDirect(alu.value)
             }
             CMC -> {
@@ -168,67 +168,67 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
                 var accumVal = accum.readDirect()
                 accumVal = accumVal.shl(1)
                 // The high bit becomes the carry bit
-                if (accumVal.and(alu.carryMask) != 0L) {
-                    alu.setCarryVal(1)
+                if (accumVal.and(alu.carryMask) != 0UL) {
+                    alu.setCarryVal(1U)
                 } else {
-                    alu.setCarryVal(0)
+                    alu.setCarryVal(0U)
                 }
                 // The low bit is the previous carry
                 if (flags.carry != 0) {
-                    accumVal = accumVal.or(1)
+                    accumVal = accumVal.or(1U)
                 }
                 accum.writeDirect(accumVal)
             }
             RAR -> {
                 val flags  = getFlags()
                 var accumVal = accum.readDirect()
-                val lsb = accumVal.and(0x1)
+                val lsb = accumVal.and(0x1U)
                 accumVal = accumVal.shr(1)
                 // Set the carry to the lsb before the shift
                 alu.setCarryVal(lsb)
                 // The high bit is the previous carry
                 if (flags.carry != 0) {
-                    accumVal = accumVal.or(0x8)
+                    accumVal = accumVal.or(0x8U)
                 }
                 accum.writeDirect(accumVal)
             }
             TCC -> {
                 val flags  = getFlags()
                 if (flags.carry != 0) {
-                    accum.writeDirect(1)
+                    accum.writeDirect(1U)
                 } else {
-                    accum.writeDirect(0)
+                    accum.writeDirect(0U)
                 }
-                alu.setCarryVal(0)
+                alu.setCarryVal(0U)
             }
             TCS -> {
                 val flags  = getFlags()
                 if (flags.carry != 0) {
-                    accum.writeDirect(10)
+                    accum.writeDirect(10U)
                 } else {
-                    accum.writeDirect(9)
+                    accum.writeDirect(9U)
                 }
-                alu.setCarryVal(0)
+                alu.setCarryVal(0U)
             }
             DAC -> {
                 alu.setAluMode(AluSub)
                 // DAC mode does not appear to use the previous borrow state like a normal subtract does.
                 // So, clear it first
-                alu.setCarryVal(0)
-                alu.evaluate(accum.readDirect(), 1)
+                alu.setCarryVal(0U)
+                alu.evaluate(accum.readDirect(), 1U)
                 accum.writeDirect(alu.value)
             }
             STC -> {
-                alu.setCarryVal(1)
+                alu.setCarryVal(1U)
             }
             DAA -> {
                 val flags  = getFlags()
                 var accumVal = accum.readDirect()
-                if (accumVal > 9 || flags.carry != 0) {
-                    accumVal += 6
+                if (accumVal > 9U || flags.carry != 0) {
+                    accumVal += 6U
                     // This command does not reset the carry, only sets it
-                    if (accumVal.and(alu.carryMask) != 0L) {
-                        alu.setCarryVal(1)
+                    if (accumVal.and(alu.carryMask) != 0UL) {
+                        alu.setCarryVal(1U)
                         accumVal = accumVal.and(alu.mask)
                     }
                     accum.writeDirect(accumVal)
@@ -236,14 +236,14 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
             }
             KBP -> {
                 var accumVal = accum.readDirect()
-                if (accumVal < 3) {
+                if (accumVal < 3U) {
                     // Do nothing
-                } else if (accumVal == 4L) {
-                    accum.writeDirect(3)
-                } else if (accumVal == 8L) {
-                    accum.writeDirect(4)
+                } else if (accumVal == 4UL) {
+                    accum.writeDirect(3U)
+                } else if (accumVal == 8UL) {
+                    accum.writeDirect(4U)
                 } else {
-                    accum.writeDirect(0xf)
+                    accum.writeDirect(0xfU)
                 }
             }
             DCL -> {
@@ -264,17 +264,17 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
                 X 1 1 1 |CM-RAM1,CM-RAM2,CM-RAM3    |Bank 7
                 */
                 var accumVal = accum.readDirect()
-                if (accumVal == 0L) {
-                    currentRamBank = 1
+                if (accumVal == 0UL) {
+                    currentRamBank = 1U
                 } else {
-                    currentRamBank = accumVal.shl(1)
+                    currentRamBank = accumVal.shl(1).toUInt()
                 }
             }
         }
         updateFlags()
         val accumPost = accum.readDirectRaw()
         val carryPost = alu.carry
-        val cmdString = accInstToString(inst.and(0xf))
+        val cmdString = accInstToString(inst.and(0xfU))
 
         if (log.isDebugEnabled)
             log.debug(String.format("Accumulator CMD %s: accum pre=%X, carryPre=%X, accum post=%X, carryPost=%X",
@@ -284,41 +284,41 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
 
 var instStrings = listOf("CLB", "CLC", "IAC", "CMC", "CMA", "RAL", "RAR", "TCC", "DAC", "TCS", "STC", "DAA", "KBP", "DCL")
 
-fun accInstToString(inst: Byte): String {
+fun accInstToString(inst: UInt): String {
     return instStrings[inst.toInt()]
 }
 
 
 class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
     val log = logger()
-    val carryMask: Long
+    val carryMask: ULong
     var mode = AluNone
-    var carry = 0L
+    var carry = 0UL
     var changed = false
-    var value = 0L
+    var value = 0UL
 
     init {
         baseInit(busWidth, "ALU")
-        carryMask = 1.toLong().shl(busWidth)
+        carryMask = 1.toULong().shl(busWidth)
     }
 
     fun reset() {
-        value = 0L
+        value = 0UL
         mode = AluNone
-        carry = 0
+        carry = 0U
         changed = true
     }
 
-    fun setCarryVal(value: Long) {
+    fun setCarryVal(value: ULong) {
         carry = value
         changed = true
     }
 
     fun complimentCarry() {
-        if (carry == 0L)
-            carry = 1L
+        if (carry == 0UL)
+            carry = 1UL
         else
-            carry = 0L
+            carry = 0UL
         changed = true
     }
 
@@ -329,27 +329,27 @@ class Alu(busWidth: Int, val dataBus: Bus, clk: Observable<Int>): Maskable() {
             log.debug("ALU mode set to " + mode)
     }
 
-    fun evaluate(accIn: Long, tmpIn: Long) {
+    fun evaluate(accIn: ULong, tmpIn: ULong) {
         var out = accIn
         val prevCarry = carry
         when (mode) {
             AluAdd -> {
                 out = accIn + tmpIn
-                if ((out.and(carryMask)) != 0L) {
-                    carry = 1
+                if ((out.and(carryMask)) != 0UL) {
+                    carry = 1U
                 } else {
-                    carry = 0
+                    carry = 0U
                 }
             }
             AluSub -> {
                 // We set the carry bit to indicate NO borrow
                 if (tmpIn > accIn) {
-                    carry = 0
+                    carry = 0U
                 } else {
-                    carry = 1
+                    carry = 1U
                 }
                 out = accIn - tmpIn
-                if (prevCarry != 0L) {
+                if (prevCarry != 0UL) {
                     out++
                 }
             }

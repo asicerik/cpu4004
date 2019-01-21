@@ -5,7 +5,7 @@ import utils.logger
 class Bus: Maskable() {
     val log = logger()
 
-    var value = 0L
+    var value = 0UL
     var writes = 0
         private set
     var bufferFollowers = mutableListOf<Pair<String, Buffer>>()
@@ -18,7 +18,7 @@ class Bus: Maskable() {
         bufferFollowers.add(Pair(side, buffer))
     }
 
-    fun write(value: Long) {
+    fun write(value: ULong) {
         this.value = value
         if (log.isTraceEnabled)
             log.trace("{} written with {}. writes(pre)={}",
@@ -29,7 +29,7 @@ class Bus: Maskable() {
         writes++
     }
 
-    fun read(): Long {
+    fun read(): ULong {
         return value
     }
 

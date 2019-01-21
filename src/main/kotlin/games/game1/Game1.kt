@@ -102,9 +102,9 @@ class Game1App: App() {
             // Copy the updated data
             var on = false
             if (i < 8) {
-                on = cpu.ioBus.value.shr(i).and(1) == 1L
+                on = cpu.ioBus.value.shr(i).and(1U) == 1UL
             } else {
-                on = cpu.outputBus.value.shr(i-8).and(1) == 1L
+                on = cpu.outputBus.value.shr(i-8).and(1U) == 1UL
             }
             leds[i].set(on)
             if (leds[i].changed)
@@ -120,7 +120,7 @@ class Game1App: App() {
         if (activeLed == leds.size) {
             activeLed = 0
         }
-        cpu.ioBus.write(0L)
+        cpu.ioBus.write(0UL)
     }
 
     override fun handleKeyEvent(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {

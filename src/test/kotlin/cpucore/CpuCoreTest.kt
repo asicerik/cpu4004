@@ -44,7 +44,7 @@ class CpuCoreTest {
             val res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
             for (i in 2..6) {
-                val addr = runOneCycle(core, 0)
+                val addr = runOneCycle(core, NOP, 0)
                 assertThat(addr.toInt()).isEqualTo(i)
             }
         }
@@ -57,94 +57,94 @@ class CpuCoreTest {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(0x7))
+            runOneCycle(core, LDM, 0x7)
             // Accumulator should now have 0x7
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(7L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(7UL)
         }
         @Test
         fun XCH() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(0x7))
+            runOneCycle(core, LDM, 0x7)
             // Accumulator should now have 0x7
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(7L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(7UL)
             // Run the XCH cycle into register 2
-            runOneCycle(core, XCH.toLong().or(0x2))
+            runOneCycle(core, XCH, 0x2)
             // Accumulator should now have 0x0
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
             // Check index register 2
-            assertThat(core.indexRegisters.readDirect(2)).isEqualTo(7L)
+            assertThat(core.indexRegisters.readDirect(2)).isEqualTo(7UL)
         }
         @Test
         fun LD() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
             // Write directly to an index register
-            core.indexRegisters.writeDirect(5, 9)
+            core.indexRegisters.writeDirect(5, 9U)
             // Load the accumulator
-            runOneCycle(core, LD.toLong().or(0x5))
+            runOneCycle(core, LD, 0x5)
             // Accumulator should now have 0x9
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(9L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(9UL)
         }
         @Test
         fun INC() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
             // Write directly to an index register
-            core.indexRegisters.writeDirect(5, 9)
+            core.indexRegisters.writeDirect(5, 9U)
             // Run the increment
-            runOneCycle(core, INC.toLong().or(0x5))
+            runOneCycle(core, INC, 0x5)
             // The register should now have 10
-            assertThat(core.indexRegisters.readDirect(5)).isEqualTo(10L)
+            assertThat(core.indexRegisters.readDirect(5)).isEqualTo(10UL)
         }
         @Test
         fun ADD() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            val valA = 9L
-            val valB = 6L
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            val valA = 9
+            val valB = 6
             // Write directly to an index register
-            core.indexRegisters.writeDirect(5, valA)
+            core.indexRegisters.writeDirect(5, valA.toULong())
             // Write the other operand to the accumulator
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(valB))
+            runOneCycle(core, LDM, valB)
             // Run the add
-            runOneCycle(core, ADD.toLong().or(0x5))
+            runOneCycle(core, ADD, 0x5)
 
             // Accumulator should now have the sum
             val expVal = valA + valB
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
         }
         @Test
         fun SUB() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            val valA = 6L
-            val valB = 9L
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            val valA = 6
+            val valB = 9
             // Write directly to an index register
-            core.indexRegisters.writeDirect(5, valA)
+            core.indexRegisters.writeDirect(5, valA.toULong())
             // Write the other operand to the accumulator
             // Load the accumulator
-            runOneCycle(core, LDM.toLong().or(valB))
+            runOneCycle(core, LDM, valB)
             // Run the subtract
-            runOneCycle(core, SUB.toLong().or(0x5))
+            runOneCycle(core, SUB, 0x5)
 
             // Accumulator should now have the difference
             val expVal = valB - valA
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(expVal)
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(expVal)
         }
 
         @Test
@@ -152,83 +152,83 @@ class CpuCoreTest {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            var regPair = 2L
-            var expSrcVal =0xCL
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            var regPair = 2
+            var expSrcVal =0xC
             // Populate the scratch registers with out expected value
-            loadRegisterPair(core, 0xC, regPair)
+            loadRegisterPair(core, 0xCU, regPair)
 
             // Use a LDM command to clear the lower 1/2 of the instruction register.
             // This is to make sure we don't decode a FIM command by mistake
-            runOneCycle(core, LDM.toLong().or(0x0))
+            runOneCycle(core, LDM, 0x0)
 
             // Run the SRC command
-            var res2 = runOneIOCycle(core, SRC.toLong().or(regPair.shl(1)))
-            assertThat(res2.second).isEqualTo(expSrcVal)
+            var res2 = runOneIOCycle(core, SRC, regPair.shl(1))
+            assertThat(res2.second).isEqualTo(expSrcVal.toULong())
         }
         @Test
         fun FIM() {
             core.reset()
-            var res = waitForSync(core)
+            val res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            var regPair = 2L
-            var romVal:Long = 0xDE
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            val regPair = 2
+            val romVal = 0xdeU
 
             // The first cycle sets up the register pair to load into
-            runOneCycle(core, FIM.toLong().or(regPair.shl(1)))
+            runOneCycle(core, FIM, regPair.shl(1))
             // The second cycle provides the data to load
-            runOneCycle(core, romVal)
+            runOneCycle(core, romVal, 0)
 
             // Now check the registers
-            assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt())).isEqualTo(romVal.shr(4).and(0xf))
-            assertThat(core.indexRegisters.readDirect(regPair.shl(1).toInt()+1)).isEqualTo(romVal.and(0xf))
+            assertThat(core.indexRegisters.readDirect(regPair.shl(1))).isEqualTo(romVal.shr(4).and(0xfU).toULong())
+            assertThat(core.indexRegisters.readDirect(regPair.shl(1)+1)).isEqualTo(romVal.and(0xfU).toULong())
         }
         @Test
         fun FIN() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            var regPair = 2L
-            var romAddr:Long = 0xDE
-            var romData:Long = 0x77
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            val regPair = 2
+            val romAddr = 0xdeU
+            val romData = 0x77U
 
             // Populate scratch registers pair 0 with out expected address
-            loadRegisterPair(core, romAddr, 0)
+            loadRegisterPair(core, romAddr.toULong(), 0)
 
             // Run the command and verify the address on the next cycle
-            var addr = runOneCycle(core, FIN.toLong().or(regPair.shl(1)))
+            var addr = runOneCycle(core, FIN, regPair.shl(1))
 
             // When the fetch is done, we should resume where we left off
-            var expAddr = addr + 1
+            val expAddr = addr + 1U
 
             // Run the next cycle and provide the ROM read data
-            addr = runOneCycle(core, romData)
-            assertThat(addr).isEqualTo(romAddr)
+            addr = runOneCycle(core, romData, 0)
+            assertThat(addr).isEqualTo(romAddr.toULong())
 
             // Run a final cycle to see where the program counter ended up
-            addr = runOneCycle(core, romData)
-            assertThat(addr).isEqualTo(expAddr)
+            addr = runOneCycle(core, romData, 0)
+            assertThat(addr).isEqualTo(expAddr.toULong())
         }
         @Test
         fun JIN() {
             core.reset()
             var res = waitForSync(core)
             assertThat(res.first).isEqualTo(true)
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0L)
-            var regPair = 2L
-            var romAddr: Long = 0xDE
-            var romData: Long = 0x77
+            assertThat(core.aluCore.accum.readDirect()).isEqualTo(0UL)
+            val regPair = 2
+            val romAddr = 0xdeU
+            val romData = 0x77U
 
             // Populate scratch registers pair 0 with out expected address
-            loadRegisterPair(core, romAddr, regPair)
+            loadRegisterPair(core, romAddr.toULong(), regPair)
 
             // Run the command and verify the address on the next cycle
-            var addr = runOneCycle(core, JIN.toLong().or(regPair.shl(1)))
+            var addr = runOneCycle(core, JIN, regPair.shl(1))
 
-            addr = runOneCycle(core, romData)
-            assertThat(addr).isEqualTo(romAddr)
+            addr = runOneCycle(core, romData, 0)
+            assertThat(addr).isEqualTo(romAddr.toULong())
         }
     }
 }

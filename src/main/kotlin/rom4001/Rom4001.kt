@@ -25,15 +25,15 @@ class Rom4001(extDataBus: Bus, ioBus: Bus?, clk: Observable<Int>, sync: Clocked<
         }
     }
 
-    fun getClkCount():Int {
+    fun getClkCount():UInt {
         return clkCount.clocked
     }
 
-    fun setRomID(id: Long) {
+    fun setRomID(id: Int) {
         setID(id)
     }
 
-    fun getRomID(): Long {
+    fun getRomID(): Int {
         return getID()
     }
 

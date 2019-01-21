@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock
 data class LogicAnalyzerChannel(
     var name: String,
     var width: Int,
-    var value: Long
+    var value: ULong
 )
 
 class LogicAnalyzer {
@@ -22,7 +22,7 @@ class LogicAnalyzer {
     private var cycle = 0
     private var lock = ReentrantLock()
 
-    fun setChannel(pos: Int, name: String, width: Int, value: Long) {
+    fun setChannel(pos: Int, name: String, width: Int, value: ULong) {
         if (pos >= channels.size) {
             channels.add(pos, LogicAnalyzerChannel(name, width, value))
         } else {
@@ -71,7 +71,7 @@ class LogicAnalyzer {
                 }
 
                 if (item[j].width == 1) {
-                    if (item[j].value == 0L) {
+                    if (item[j].value == 0UL) {
                         g.drawLine(left, top + waveformHeight, left + cycleWidth, top + waveformHeight)
                         if (changed)
                             g.drawLine(left, top, left, top + waveformHeight)
@@ -94,7 +94,7 @@ class LogicAnalyzer {
                         g.drawLine(left, top, left + cycleWidth, top)
                     }
                     if (changed || i == 0) {
-                        g.drawString(String.format("%X", item[j].value), left + cycleWidth/2, top + MainFontSize+5)
+                        g.drawString(String.format("%X", item[j].value.toLong()), left + cycleWidth/2, top + MainFontSize+5)
                     }
                 }
                 top += channelHeight

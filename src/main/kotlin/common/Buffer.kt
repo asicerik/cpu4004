@@ -25,7 +25,7 @@ class Buffer(val busA: Bus, val busB: Bus, val name: String) {
         dir = BufDirBtoA
     }
 
-    fun notifyBusWrite(side: String, value: Long) {
+    fun notifyBusWrite(side: String, value: ULong) {
         if (side == "A" && dir == BufDirAtoB) {
             busB.write(value)
         } else if (side == "B" && dir == BufDirBtoA) {

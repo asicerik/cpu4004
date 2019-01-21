@@ -26,15 +26,15 @@ class Ram4002(extDataBus: Bus, ioBus: Bus?, clk: Observable<Int>, sync: Clocked<
         }
     }
 
-    fun getClkCount():Int {
+    fun getClkCount():UInt {
         return clkCount.clocked
     }
 
-    fun setRamID(id: Long) {
+    fun setRamID(id: Int) {
         setID(id)
     }
 
-    fun getRamID(): Long {
+    fun getRamID(): Int {
         return getID()
     }
 

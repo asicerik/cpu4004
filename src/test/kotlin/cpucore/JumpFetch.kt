@@ -34,10 +34,10 @@ class JumpFetchTests {
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            verifyJumpExtended(core, JUN.toLong(), true, true)
-            var nextAddr = 0xabdL
+            verifyJumpExtended(core, JUN, true, true)
+            var nextAddr = 0xabdUL
             for (i in 0..3) {
-                var addr = runOneCycle(core, NOP.toLong())
+                var addr = runOneCycle(core, NOP, 0)
                 assertThat(addr).isEqualTo(nextAddr)
                 nextAddr++
             }
@@ -48,12 +48,12 @@ class JumpFetchTests {
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            verifyJumpExtended(core, JMS.toLong(), true, true)
-            // Stack pointer should now be 1
-            assertThat(core.addrStack.stackPointer).isEqualTo(1)
-            var nextAddr = 0xabdL
+            verifyJumpExtended(core, JMS, true, true)
+            // Stack pointer should now be 0
+            assertThat(core.addrStack.stackPointer).isEqualTo(0)
+            var nextAddr = 0xabdUL
             for (i in 0..3) {
-                var addr = runOneCycle(core, NOP.toLong())
+                var addr = runOneCycle(core, NOP, 0)
                 assertThat(addr).isEqualTo(nextAddr)
                 nextAddr++
             }
@@ -64,28 +64,28 @@ class JumpFetchTests {
             Assertions.assertThat(core.sync.clocked).isEqualTo(1)
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
-            verifyJumpExtended(core, JMS.toLong(), true, true)
-            // Stack pointer should now be 1
-            assertThat(core.addrStack.stackPointer).isEqualTo(1)
-            var nextAddr = 0xabdL
+            verifyJumpExtended(core, JMS, true, true)
+            // Stack pointer should now be 0
+            assertThat(core.addrStack.stackPointer).isEqualTo(0)
+            var nextAddr = 0xabdUL
             for (i in 0..3) {
-                var addr = runOneCycle(core, NOP.toLong())
+                var addr = runOneCycle(core, NOP, 0)
                 assertThat(addr).isEqualTo(nextAddr)
                 nextAddr++
             }
 
             // Now run the BBL and we should be back where we were
-            val accumVal: Long = 0x9
-            var addr = runOneCycle(core, BBL.toLong().or(accumVal))
-            // Stack pointer should now be 0
-            assertThat(core.addrStack.stackPointer).isEqualTo(0)
+            val accumVal = 0x9
+            var addr = runOneCycle(core, BBL, accumVal)
+            // Stack pointer should now be -1
+            assertThat(core.addrStack.stackPointer).isEqualTo(-1)
 
             // Address should be 1 after where the jump was
-            addr = runOneCycle(core, NOP.toLong())
-            assertThat(addr).isEqualTo(1)
+            addr = runOneCycle(core, NOP, 0)
+            assertThat(addr).isEqualTo(6UL)
 
             // Finally, the accumulator should have the right value in it
-            assertThat(core.aluCore.accum.readDirect()).isEqualTo(accumVal)
+            assertThat(core.aluCore.accum.readDirect().toInt()).isEqualTo(accumVal)
         }
 
         @Test
@@ -95,31 +95,31 @@ class JumpFetchTests {
             var res = waitForSync(core)
             Assertions.assertThat(res.first).isEqualTo(true)
             // No flags set, should jump
-            var conditionFlags = 0L
+            var conditionFlags = 0U
             var jumpExpected = true
-            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+            verifyJump(core, JCN.toUInt().or(conditionFlags), jumpExpected)
 
             // Carry bit should not be set, no jump
-            conditionFlags = 2L
+            conditionFlags = 2U
             jumpExpected = false
-            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+            verifyJump(core, JCN.toUInt().or(conditionFlags), jumpExpected)
 
             // Accumulator bit should be set, jump
-            conditionFlags = 4L
+            conditionFlags = 4U
             jumpExpected = true
-            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+            verifyJump(core, JCN.toUInt().or(conditionFlags), jumpExpected)
 
             // Load the accumulator and verify no jump
-            runOneCycle(core, LDM.toLong().or(5))
-            conditionFlags = 4L
+            runOneCycle(core, LDM,5)
+            conditionFlags = 4U
             jumpExpected = false
-            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+            verifyJump(core, JCN.toUInt().or(conditionFlags), jumpExpected)
 
             // Run the inverse test
-            runOneCycle(core, LDM.toLong().or(5))
-            conditionFlags = 0xCL
+            runOneCycle(core, LDM,5)
+            conditionFlags = 0xCU
             jumpExpected = true
-            verifyJump(core, JCN.toLong().or(conditionFlags), jumpExpected)
+            verifyJump(core, JCN.toUInt().or(conditionFlags), jumpExpected)
         }
 
     }

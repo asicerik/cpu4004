@@ -1,7 +1,7 @@
 package cpucore
 
-fun handleJCN_JMS_ISZ_JUN(d: Decoder, fullInst: Long, evalResult: Boolean)  {
-    val opr = d.currInstruction.and(0xf0).toByte()
+fun handleJCN_JMS_ISZ_JUN(d: Decoder, fullInst: ULong, evalResult: Boolean)  {
+    val opr = d.currInstruction.and(0xf0).toUInt()
 
     // Are we on the first phase?
     if (d.dblInstruction == 0) {
@@ -97,7 +97,7 @@ fun evalulateJCN(c: CpuCore): Boolean {
         result = ((carryBitFlag == 1) && (aluFlags.carry == 0)) ||
                 ((zeroBitFlag == 1) && (aluFlags.zero == 0))
     }
-    c.log.debug(String.format("evalulateJCN: conditionalFlags=%X, aluFlags=%b. Result=%b", condititonFlags, aluFlags, result))
+    c.log.debug(String.format("evalulateJCN: conditionalFlags=%X, aluFlags=%b. Result=%b", condititonFlags.toLong(), aluFlags, result))
     return result
 }
 
@@ -189,7 +189,7 @@ fun handleBBL(d: Decoder) {
 
     // Jump indirect to address in specified register pair
     if (d.clkCount.raw == 6) {
-        d.setDecodedInstructionString(String.format("BBL %X", d.currInstruction.and(0xf)))
+        d.setDecodedInstructionString(String.format("BBL %X", d.currInstruction.and(0xf).toLong()))
         // Pop the address stack
         d.writeFlag(FlagTypes.StackPop, 1)
         // Store the passed data into the accumulator

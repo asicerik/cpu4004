@@ -113,7 +113,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             aluCore.swap()
         }
         if (decoder.readFlag(FlagTypes.AccInst) >= 0) {
-            aluCore.exectuteAccInst(decoder.readFlag(FlagTypes.AccInst).toByte())
+            aluCore.exectuteAccInst(decoder.readFlag(FlagTypes.AccInst).toUInt())
         }
         if (decoder.readFlag(FlagTypes.IndexLoad) != 0) {
             indexRegisters.write()
@@ -126,7 +126,7 @@ class CpuCore(val extDataBus: Bus, clk: Observable<Int>) {
             cmRom.raw = 0
         }
         if (decoder.readFlag(FlagTypes.CmRam) > 0) {
-            cmRam.raw = aluCore.currentRamBank.inv().and(0xf).toInt()
+            cmRam.raw = aluCore.currentRamBank.inv().and(0xfU).toInt()
         }
     }
 

@@ -46,7 +46,7 @@ class BusRenderer {
             g.fillRect(start.x + arrowWidth, start.y - busWidth / 2, end.x - start.x - 2 * arrowWidth, busWidth)
             if (bus.name.isNotEmpty()) {
                 g.color = RegisterTextNormal
-                g.drawString(String.format("%s %X", bus.name, bus.value), start.x + 20 + arrowWidth, start.y+ MainFontSize/3)
+                g.drawString(String.format("%s %X", bus.name, bus.value.toLong()), start.x + 20 + arrowWidth, start.y+ MainFontSize/3)
             }
         } else if (start.x == end.x) {
             if (!noStartArrow)

@@ -9,7 +9,7 @@ import utils.logger
 class InstructionReg(val dataBus: Bus, clk: Observable<Int>) {
     val log = logger()
 
-    val inst = Register(0L, clk)
+    val inst = Register(0U, clk)
 
     // Renderer stuff
     var drivingBus = false
@@ -22,7 +22,7 @@ class InstructionReg(val dataBus: Bus, clk: Observable<Int>) {
         inst.reset()
     }
 
-    fun getInstructionRegister(): Long {
+    fun getInstructionRegister(): ULong {
         return inst.readDirect()
     }
 
