@@ -36,13 +36,13 @@ class Game1App: App() {
     var cpu = Cpu()
 
     init {
-        width = 256
-        height = 256
+        width = 450
+        height = 450
     }
 
     fun initCpu() {
         cpu.init()
-        cpu.loadProgram(instruction.genLEDCountUsingAdd())
+        cpu.loadProgram(instruction.genShifter(16))
     }
 
     fun runCpu() {
@@ -52,8 +52,8 @@ class Game1App: App() {
     override fun createScene() {
         vao = glGenVertexArrays()
         glBindVertexArray(vao)
-        for (y in 0..3) {
-            for (i in 0..3) {
+        for (y in 0..7) {
+            for (i in 0..7) {
                 val led = LedGl()
                 val vbos = led.createLedVbo(Vector3f(i * 50f + 50f, y * 50f + 50f, 0f), 15f, 16)
                 led.obj.createVbos(vbos.first, vbos.second)
@@ -101,7 +101,7 @@ class Game1App: App() {
             glBindBuffer(GL_ARRAY_BUFFER, leds[i].obj.colorVbo)
             // Copy the updated data
             var on = false
-            if (i < 8) {
+            if (i < 64) {
                 on = cpu.ioBus.value.shr(i).and(1U) == 1UL
             } else {
                 on = cpu.outputBus.value.shr(i-8).and(1U) == 1UL
@@ -120,7 +120,7 @@ class Game1App: App() {
         if (activeLed == leds.size) {
             activeLed = 0
         }
-        cpu.ioBus.write(0UL)
+        cpu.ioBus.write(cpu.ioBus.value.and(0x7fffffffffffffffUL))
     }
 
     override fun handleKeyEvent(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {

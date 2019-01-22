@@ -50,17 +50,17 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
         val tmp = temp.readDirect()
         temp.writeDirect(accum.readDirect())
         accum.writeDirect(tmp)
-        log.trace(String.format("ALU Swap. accum=%X, temp=%X", accum.readDirect().toLong(), temp.readDirect().toLong()))
+        log.debug(String.format("ALU Swap. accum=%X, temp=%X", accum.readDirect().toLong(), temp.readDirect().toLong()))
     }
 
     fun writeAccumulator() {
         accum.write()
-        log.trace(String.format("ACCUM write with %X", dataBus.read().toLong()))
+        log.debug(String.format("ACCUM write with %X", dataBus.read().toLong()))
     }
 
     fun writeTemp() {
         temp.write()
-        log.trace(String.format("Temp write with %X", dataBus.read().toLong()))
+        log.debug(String.format("Temp write with %X", dataBus.read().toLong()))
     }
 
     fun readAccumulator() {
@@ -278,7 +278,7 @@ class AluCore(val dataBus: Bus, clk: Observable<Int>) {
 
         if (log.isDebugEnabled)
             log.debug(String.format("Accumulator CMD %s: accum pre=%X, carryPre=%X, accum post=%X, carryPost=%X",
-                cmdString, accumPre, carryPre, accumPost, carryPost))
+                cmdString, accumPre.toLong(), carryPre.toLong(), accumPost.toLong(), carryPost.toLong()))
     }
 }
 

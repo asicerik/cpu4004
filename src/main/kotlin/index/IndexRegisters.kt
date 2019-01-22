@@ -55,14 +55,14 @@ class IndexRegisters(val dataBus: Bus, clk: Observable<Int>) {
     fun write() {
         regs[index].write()
         if (log.isTraceEnabled) {
-            log.trace(String.format("Wrote index register %d with %X", index, dataBus.value))
+            log.trace(String.format("Wrote index register %d with %X", index, dataBus.value.toLong()))
         }
     }
 
     fun increment() {
         regs[index].writeDirect((regs[index].readDirect()+1U).and(regs[index].mask))
         if (log.isTraceEnabled) {
-            log.trace(String.format("Incremented index register %d. New value is %X", index, regs[index].readDirect()))
+            log.trace(String.format("Incremented index register %d. New value is %X", index, regs[index].readDirect().toLong()))
         }
     }
 

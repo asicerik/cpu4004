@@ -49,6 +49,15 @@ fun handleFIM_SRC(d: Decoder, fullInst: Long) {
 
 // WRR, WMP, WR0-3 all do the same thing as far as the processor is concerned
 fun handleWRM_WMP_WRR_WRn(d: Decoder) {
+    when (d.currInstruction.toUInt()) {
+        WRR -> { d.setDecodedInstructionString("WRR") }
+        WMP -> { d.setDecodedInstructionString("WMP") }
+        WRM -> { d.setDecodedInstructionString("WRM") }
+        WR0 -> { d.setDecodedInstructionString("WR0") }
+        WR1 -> { d.setDecodedInstructionString("WR1") }
+        WR2 -> { d.setDecodedInstructionString("WR2") }
+        WR3 -> { d.setDecodedInstructionString("WR3") }
+    }
     // Write the accumulator to the bus
     if (d.clkCount.raw == 6) {
         d.writeFlag(FlagTypes.AccOut, 1)

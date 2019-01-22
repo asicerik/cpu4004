@@ -3,11 +3,11 @@ package cpucore
 fun handleXCH(d: Decoder) {
     // Exchange the accumulator and the scratchpad register
     if (d.clkCount.raw == 5) {
-        d.setDecodedInstructionString(String.format("XCH %X", d.currInstruction.and(0xf)))
         // Output the data from the selected scratchpad register
         d.writeFlag(FlagTypes.IndexSelect, 17)
         d.writeFlag(FlagTypes.ScratchPadOut, 1)
     } else if (d.clkCount.raw == 6) {
+        d.setDecodedInstructionString(String.format("XCH %X", d.currInstruction.and(0xf)))
         // Load the data into the Temp register
         d.writeFlag(FlagTypes.TempLoad, 1)
         // Output the accumulator

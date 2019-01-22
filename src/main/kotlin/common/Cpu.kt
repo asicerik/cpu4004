@@ -6,6 +6,7 @@ import instruction.genLEDCountUsingAdd
 import io.reactivex.Emitter
 import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
+import org.slf4j.Logger
 import ram4002.Ram4002
 import rom4001.Rom4001
 import utils.logger
@@ -39,6 +40,7 @@ class Cpu {
         ram = Ram4002(extDataBus, outputBus, clk, cpuCore!!.sync, cpuCore!!.cmRam)
         rom!!.omniMode = true
         ram!!.omniMode = true
+        ram!!.createRamMemory(16, 4, 4)
         ioBus.init(64, String.format("ROM I/O Bus"))
         outputBus.init(64, String.format("RAM Output Bus"))
         return true
@@ -59,7 +61,9 @@ class Cpu {
                 val value:ULong = ioBus.value.shr(63)
                 Thread.sleep(1)
             } else {
+                //Thread.sleep(1)
                 cpuClockCount++
+                logState(cpuCore!!, rom!!, log)
                 emitter!!.onNext(0)
                 emitter!!.onNext(1)
                 val endTime = System.currentTimeMillis()
@@ -73,4 +77,15 @@ class Cpu {
         }
 
     }
+}
+
+fun logState(core: cpucore.CpuCore, rom: rom4001.Rom4001, log: Logger) {
+    if (log.isInfoEnabled)
+        log.info("PC={}, DBUS={}, SYNC={}, CMROM={}, CMRAM={}, CCLK={}",
+            core.addrStack.getProgramCounter(),
+            Integer.toHexString(core.extDataBus.value.toInt()),
+            core.sync.clocked,
+            core.cmRom.clocked,
+            core.cmRam.clocked,
+            core.getClkCount())
 }

@@ -20,9 +20,9 @@ class Bus: Maskable() {
 
     fun write(value: ULong) {
         this.value = value
-        if (log.isTraceEnabled)
-            log.trace("{} written with {}. writes(pre)={}",
-                name, Integer.toHexString(value.toInt()), writes)
+//        if (log.isTraceEnabled)
+//            log.trace("{} written with {}. writes(pre)={}",
+//                name, Integer.toHexString(value.toInt()), writes)
         for (buf in bufferFollowers) {
             buf.second.notifyBusWrite(buf.first, value)
         }
