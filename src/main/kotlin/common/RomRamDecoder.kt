@@ -273,7 +273,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
                                     calculateValueRegisters()
                                     log.debug(String.format("Wrote RAM memory %d with %X. Our chipID=%02X",
                                         (srcCharacterSel+(srcRegisterSel*characters)),
-                                        intBus.read(),
+                                        intBus.read().toLong(),
                                         id))
                                 }
                             }
