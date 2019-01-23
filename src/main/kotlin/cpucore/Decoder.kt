@@ -182,6 +182,7 @@ class Decoder(clk: Observable<Int>) {
         // The upper 4 bits of the instruction
         val opr = currInstruction.and(0xf0).toUInt()
         val fullInst = currInstruction.toUInt()
+        log.info(String.format("opr=%X, fullInst=%X", opr.toLong(), fullInst.toLong()))
         when (opr) {
             // Note FIN and JIN share the same upper 4 bits
             FIN.and(0xf0U) ->

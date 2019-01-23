@@ -53,13 +53,13 @@ val DCL = ACC.or(0xDU) // Designate command line
 
 // Some helpers
 // You can use any of these three in combination
-val JCN_TEST_SET = 0x11  // Jump if test bit is set
-val JCN_CARRY_SET = 0x12 // Jump if carry bit is set
-val JCN_ZERO_SET = 0x14  // Jump if accumulator is zero
+val JCN_TEST_SET    = 0x11U  // Jump if test bit is set
+val JCN_CARRY_SET   = 0x12U  // Jump if carry bit is set
+val JCN_ZERO_SET    = 0x14U  // Jump if accumulator is zero
 // You can use any of these three in combination
-val JCN_TEST_UNSET = 0x19  // Jump if test bit is NOT set
-val JCN_CARRY_UNSET = 0x1A // Jump if carry bit is NOT set
-val JCN_ZERO_UNSET = 0x1C  // Jump if accumulator is NOT zero
+val JCN_TEST_UNSET  = 0x19U  // Jump if test bit is NOT set
+val JCN_CARRY_UNSET = 0x1AU  // Jump if carry bit is NOT set
+val JCN_ZERO_UNSET  = 0x1CU  // Jump if accumulator is NOT zero
 
 // From the instruction decoder
 val AluIntModeNone = 0

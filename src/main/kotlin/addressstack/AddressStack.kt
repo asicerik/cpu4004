@@ -55,7 +55,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
 
     fun stackPush() {
         stackPointer++
-        if (stackPointer == stackDepth) {
+        if (stackPointer >= stackDepth) {
             log.warn("Stack overflow")
             return
         }
@@ -64,7 +64,7 @@ class AddressStack(val dataBus: Bus, clk: Observable<Int>) {
     }
 
     fun stackPop() {
-        if (stackPointer == -1) {
+        if (stackPointer < 0) {
             log.warn("Stack underflow")
             return
         }

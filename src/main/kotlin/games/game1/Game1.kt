@@ -2,6 +2,7 @@ package games.game1
 
 import common.Cpu
 import games.App
+import games.game1.programs.MainProgram
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import opengl.GlObject
@@ -14,6 +15,7 @@ import org.joml.Vector3f
 import org.lwjgl.opengl.GL20
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL15
+import utils.logger
 import java.io.File
 import java.nio.FloatBuffer
 import kotlin.system.exitProcess
@@ -29,6 +31,7 @@ fun main(args: Array<String>) {
 }
 
 class Game1App: App() {
+    private val log = logger()
     var vao = 0
     val leds = mutableListOf<LedGl>()
     var program = 0
@@ -42,7 +45,9 @@ class Game1App: App() {
 
     fun initCpu() {
         cpu.init()
-        cpu.loadProgram(instruction.genShifter(16))
+        val prog = MainProgram()
+        cpu.loadProgram(prog.create())
+//        cpu.loadProgram(instruction.genShifter(16))
     }
 
     fun runCpu() {
@@ -52,8 +57,8 @@ class Game1App: App() {
     override fun createScene() {
         vao = glGenVertexArrays()
         glBindVertexArray(vao)
-        for (y in 0..7) {
-            for (i in 0..7) {
+        for (y in 0..3) {
+            for (i in 0..3) {
                 val led = LedGl()
                 val vbos = led.createLedVbo(Vector3f(i * 50f + 50f, y * 50f + 50f, 0f), 15f, 16)
                 led.obj.createVbos(vbos.first, vbos.second)
@@ -101,7 +106,7 @@ class Game1App: App() {
             glBindBuffer(GL_ARRAY_BUFFER, leds[i].obj.colorVbo)
             // Copy the updated data
             var on = false
-            if (i < 64) {
+            if (i < 8) {
                 on = cpu.ioBus.value.shr(i).and(1U) == 1UL
             } else {
                 on = cpu.outputBus.value.shr(i-8).and(1U) == 1UL
@@ -124,8 +129,20 @@ class Game1App: App() {
     }
 
     override fun handleKeyEvent(window: Long, key: Int, scancode: Int, action: Int, mods: Int) {
-        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE && action == org.lwjgl.glfw.GLFW.GLFW_RELEASE)
-            org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose(window, true)
+        when (key) {
+            org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE, org.lwjgl.glfw.GLFW.GLFW_KEY_Q -> {
+                if (action == org.lwjgl.glfw.GLFW.GLFW_RELEASE)
+                    org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose(window, true)
+            }
+            org.lwjgl.glfw.GLFW.GLFW_KEY_W -> {
+                if (action == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
+                    cpu.ioBus.write(1U)
+                } else if (action == org.lwjgl.glfw.GLFW.GLFW_RELEASE) {
+                    cpu.ioBus.write(0U)
+                    log.warn("Release")
+                }
+            }
+        }
     }
 
     override fun handleScreenSizeChange(width: Int, height: Int) {

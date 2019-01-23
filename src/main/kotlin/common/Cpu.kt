@@ -58,6 +58,7 @@ class Cpu {
         while (true) {
             // Bit 64 of iobus is the pause signal from the CPU
             if (ioBus.value.shr(63) != 0UL) {
+                //log.debug("*********** Got pause instruction from CPU *********** ")
                 val value:ULong = ioBus.value.shr(63)
                 Thread.sleep(1)
             } else {

@@ -101,6 +101,7 @@ open class RomRamDecoder(val extBus: Bus, val ioBus: Bus?, clk: Observable<Int>,
     fun resetFlags() {
         addrLoad = 0
         romDataOut = 0
+        ioRead = false
         memRead = false
         statusRead = -1
 
